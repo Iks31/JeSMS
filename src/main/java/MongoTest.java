@@ -21,7 +21,7 @@ public static void main(String[] args) {
 // Replace with your actual connection string
 
         try {
-            mongoClient = MongoClients.create(uri);
+         //   mongoClient = MongoClients.create(uri);
             System.out.println("✅ Connected to MongoDB!");
 
             // List all databases
