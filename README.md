@@ -25,4 +25,4 @@ The project consists of:
 | Contributor | GitHub |
 |-------------|--------|
 | [![Christian](https://github.com/ChristianGleitzman.png?size=50)](https://github.com/ChristianGleitzman) | [Christian](https://github.com/ChristianGleitzman) |
-| [![Iker](https://github.com/Iks31.png?size=5)](https://github.com/Iks31) | [Iker](https://github.com/Iks31) |
+| [![Iker](https://github.com/Iks31.png?size=1)](https://github.com/Iks31) | [Iker](https://github.com/Iks31) |
