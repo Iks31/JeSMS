@@ -1,0 +1,99 @@
+/* ============================
+   Color Palette
+   ============================ */
+
+/* Named colors as classes */
+.non-photo-blue {
+    -fx-background-color: #a3e7fc;
+}
+
+.emerald {
+    -fx-background-color: #26c485;
+}
+
+.dark-cyan {
+    -fx-background-color: #32908f;
+}
+
+.davys-gray {
+    -fx-background-color: #474350;
+}
+
+.jet {
+    -fx-background-color: #333333;
+}
+
+/* Text styles */
+.text-non-photo-blue {
+    -fx-text-fill: #a3e7fc;
+}
+
+.text-emerald {
+    -fx-text-fill: #26c485;
+}
+
+.text-dark-cyan {
+    -fx-text-fill: #32908f;
+}
+
+.text-davys-gray {
+    -fx-text-fill: #474350;
+}
+
+.text-jet {
+    -fx-text-fill: #333333;
+}
+
+/* ============================
+   Button styles
+   ============================ */
+
+
+
+.button-primary {
+    -fx-background-color: #26c485;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-padding: 6 12;
+}
+
+.button-primary:hover {
+    -fx-background-color: #32908f;
+}
+
+.button-primary:pressed {
+    -fx-background-color: #B1C1C0;
+}
+
+.button-secondary {
+    -fx-background-color: #474350;
+    -fx-text-fill: #a3e7fc;
+    -fx-background-radius: 8;
+    -fx-padding: 6 12;
+}
+
+.button-secondary:hover {
+    -fx-background-color: #333333;
+}
+
+.button-secondary:pressed {
+    -fx-background-color: #B1C1C0;
+}
+
+.back-button {
+    -fx-background-color: transparent;   /* no button background */
+    -fx-cursor: hand;                    /* pointer cursor */
+}
+
+.back-button:hover {
+    -fx-opacity: 0.6;   /* makes it 60% opaque on hover */
+}
+
+/* ============================
+   Root component styles
+   ============================ */
+
+.root {
+
+}
