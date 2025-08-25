@@ -4,7 +4,7 @@ import org.bson.Document;
 import java.util.Iterator;
 
 public class MongoTest {
-    String uri = "mongodb+srv://ikerdz3101:@jesmscluster0.9ownp4i.mongodb.net/?retryWrites=true&w=majority&appName=JeSMScluster0";
+    String uri = "mongodb+srv://ikerdz3101:Pamplona3101@jesmscluster0.9ownp4i.mongodb.net/?retryWrites=true&w=majority&appName=JeSMScluster0";
     static MongoDatabase db;
     private static MongoClient mongoClient;
 
