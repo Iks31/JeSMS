@@ -1,7 +1,18 @@
 package com.github.Iks31.messagingapp.server.db;
 
 import com.mongodb.client.*;
+import com.mongodb.MongoException;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.ServerApi;
+import com.mongodb.ServerApiVersion;
 import org.bson.Document;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
 
 import java.util.Iterator;
 
@@ -12,8 +23,8 @@ public class MongoTest {
 
 
 public static void main(String[] args) {
-    connect();
-    // now you can
+    getconversations("user1");
+    login("user1", "passwor");
 }
     public static void connect()
     {
@@ -49,11 +60,51 @@ public static void main(String[] args) {
            return null;
         }
     }
-    public static void insertADocIntoDb()
+
+    public static String getconversations(String username) {
+        if (db == null) {
+            connect();
+        }
+        MongoCollection<Document> collection = Collection("conversations");
+        ArrayList<Document> conversations = new ArrayList<>();
+
+        try {
+            FindIterable<Document> iterable = collection.find(eq("users", username));
+            MongoCursor<Document> mongoCursor = iterable.iterator();
+            while (mongoCursor.hasNext()) {
+                conversations.add(mongoCursor.next());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        String json = conversations.getFirst().toJson();
+        System.out.println(json);
+        return json;
+    }
+
+    public static boolean login(String username, String password) {
+        if (db == null) {
+            connect();
+        }
+
+        MongoCollection<Document> collection = Collection("users");
+
+        try{
+            Document user = collection.find(and(eq("user", username),eq("password", password))).first();
+            if(user !=null)System.out.println("login success");
+            else System.out.println("login failed");
+            return user != null;
+        } catch (Exception e) {
+            System.err.println("login unsuccessful");
+            return false;
+        }
+    }
+
+    //TODO need to change the Document that is inserted into one that fits the format of the conversations documents
+    public static void createconversation(String username, String message)
     {
         try {
-            // establishConnections() Code
-            // is defined above
             if (db == null) {
                 connect();
             }
@@ -61,7 +112,7 @@ public static void main(String[] args) {
             // Creating the document
             // to be inserted
 
-            MongoCollection<Document> collection = Collection("users");
+            MongoCollection<Document> collection = Collection("conversations");
             Document document = new Document("MessageID",
                                             "2")
                     .append("ChatID", "Open-Source database")
@@ -73,7 +124,6 @@ public static void main(String[] args) {
                     .append("editedAt","")
                     .append("deleted","");
 
-            // Insert the document
 
             collection.insertOne(document);
 
@@ -91,10 +141,9 @@ public static void main(String[] args) {
     {
 
         try {
-            // establishConnections() Code
-            // is defined above
-            connect();
-
+            if (db == null) {
+                connect();
+            }
 
             System.out.println(
                     "Displaying the list"
@@ -116,34 +165,4 @@ public static void main(String[] args) {
         }
     }
 
-    public static void displayDocuments()
-    {
-
-        try {
-            // establishConnections() Code
-            // is defined above
-            connect();
-
-            System.out.println(
-                    "Displaying the list"
-                            + " of Documents");
-
-            // Get the list of documents from the DB
-
-            FindIterable<Document> iterobj
-                    = Collection("users").find();
-
-            // Print the documents using iterators
-            Iterator itr = iterobj.iterator();
-            while (itr.hasNext()) {
-                System.out.println(itr.next());
-            }
-        }
-        catch (Exception e) {
-            System.out.println(
-                    "Could not find the documents "
-                            + "or No document exists");
-            System.out.println(e);
-        }
-    }
 }
