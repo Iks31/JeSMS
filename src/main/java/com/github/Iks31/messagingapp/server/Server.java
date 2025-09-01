@@ -1,3 +1,5 @@
+package com.github.Iks31.messagingapp.server;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -26,7 +28,7 @@ public class Server implements Runnable{
         try {
             server = new ServerSocket(9999);
             pool = Executors.newCachedThreadPool();
-            System.out.println("Server started on port 9999...");
+            System.out.println("com.github.Iks31.messagingapp.server.Server started on port 9999...");
             while(!done){
                 Socket client = server.accept();
                 System.out.println("Accepted connection from " + client.getInetAddress());// returns client socket
