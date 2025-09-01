@@ -1,19 +1,18 @@
+package com.github.Iks31.messagingapp.server.db;
+
 import com.mongodb.client.*;
 import org.bson.Document;
 
 import java.util.Iterator;
 
 public class MongoTest {
-    String uri = "mongodb+srv://ikerdz3101:Pamplona3101@jesmscluster0.9ownp4i.mongodb.net/?retryWrites=true&w=majority&appName=JeSMScluster0";
+    static String uri = "mongodb+srv://ikerdz3101:<dbpassword>@jesmscluster0.9ownp4i.mongodb.net/?retryWrites=true&w=majority&appName=JeSMScluster0";
     static MongoDatabase db;
     private static MongoClient mongoClient;
 
 
 public static void main(String[] args) {
     connect();
-    MongoCollection<Document> collection = db.getCollection("Users");
-    displayCollections();
-    displayDocuments();
     // now you can
 }
     public static void connect()
@@ -21,7 +20,7 @@ public static void main(String[] args) {
 // Replace with your actual connection string
 
         try {
-         //   mongoClient = MongoClients.create(uri);
+            mongoClient = MongoClients.create(uri);
             System.out.println("✅ Connected to MongoDB!");
 
             // List all databases
