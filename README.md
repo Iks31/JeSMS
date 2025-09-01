@@ -2,8 +2,8 @@
 
 A simple real-time messaging application currently under development.  
 The project consists of:  
-- **com.github.Iks31.messagingapp.server.Server:** Handles connections, message routing, and data persistence using **MongoDB**.  
-- **com.github.Iks31.messagingapp.client.Client:** A **JavaFX** desktop application that provides the user interface for sending and receiving messages.
+- **Server:** Handles connections, message routing, and data persistence using **MongoDB**.  
+- **Client:** A **JavaFX** desktop application that provides the user interface for sending and receiving messages.
 
 ## Features (Planned / In Progress)
 - [ ] com.github.Iks31.messagingapp.server.Server–client architecture  
@@ -15,7 +15,7 @@ The project consists of:
 
 ## Technologies Used
 - **Java 17+**  
-- **JavaFX** (com.github.Iks31.messagingapp.client.Client UI)  
+- **JavaFX** (Client UI)  
 - **MongoDB** (Database)  
 - **Maven** (Build tool)  
 
