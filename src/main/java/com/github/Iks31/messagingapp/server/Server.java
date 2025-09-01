@@ -10,7 +10,17 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class Server implements Runnable{
+
+// Current server code analysis:
+// - Server will run similarly to current code and have a list of connections
+// - Server will accept connections initially regardless of login - inactivity for too long can disconnect a user to prevent too many connections while still not in
+// - Execution pool can be used to handle users connecting as before
+// - Main difference is connection handler code will work much differently
+// - Connection handler will read in and deserialize Network Message classes and then send relevant responses
+// - Ability to broadcast will be useful just not used very often
+// - Main challenge will be realtime messaging - inter thread communication needed to inform another connected user of a new message and update
+
+public class Server implements Runnable {
 
     private ArrayList<ConnectionHandler> connections;
     private ServerSocket server;
