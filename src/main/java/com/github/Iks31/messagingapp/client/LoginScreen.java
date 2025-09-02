@@ -1,5 +1,6 @@
 package com.github.Iks31.messagingapp.client;
 
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -14,6 +15,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class LoginScreen implements UI {
+    private final Label statusLabel = new Label("");
     // Changes needed: scope of UI components to object variables for access within methods
     @Override
     public Scene getScene(Stage stage) {
@@ -29,7 +31,7 @@ public class LoginScreen implements UI {
         Label passwordLabel = new Label("Please Enter Your Password: ");
         TextField passwordField = new PasswordField();
 
-        Label statusLabel = new Label("");
+
         grid.add(usernameLabel, 0, 0);
         grid.add(usernameField, 1, 0);
         grid.add(passwordLabel, 0, 1);
@@ -38,7 +40,7 @@ public class LoginScreen implements UI {
 
         TextButton submitBtn = new TextButton("Submit", "button-primary");
         //submitBtn.disableProperty().bind(); Refer to bindings lecture slides
-        submitBtn.setOnAction(e -> loginVerification(usernameField.getText(), passwordField.getText(), statusLabel));
+        submitBtn.setOnAction(e -> loginVerification(usernameField.getText(), passwordField.getText()));
         ClearButton clrBtn = new ClearButton(usernameField, passwordField);
         HBox btnBox = new HBox(15, submitBtn, clrBtn);
         btnBox.setAlignment(Pos.CENTER);
@@ -54,19 +56,30 @@ public class LoginScreen implements UI {
         layout.setCenter(centerBox);
         layout.setBottom(backBtn);
 
+        // Handling login relevant messages from the server
+        ClientApp.getClientNetworking().setMessageHandler(msg -> {
+            if ("LOGIN_SUCCESS".equals(msg.getFlag())) {
+                Platform.runLater(() -> showJeSMS(stage));
+            } else if ("LOGIN_FAILURE".equals(msg.getFlag())) {
+                Platform.runLater(() -> updateStatus((String) msg.getContent()));
+            }
+        });
+
+        // Creating and returning the scene
         Scene scene = new Scene(layout, 600, 400);
         scene.getStylesheets().add("style.css");
         return scene;
     }
-    public void loginVerification(String username, String password, Label statusLabel) {
-        if (username.equals("admin") && password.equals("admin")) {
-            System.out.println("Login Successful");
-            showJeSMS((Stage) statusLabel.getScene().getWindow());
-        } else {
-            System.out.println("Login Failed");
-            statusLabel.setText("Login Failed. Please try again ");
-        }
+
+    public void loginVerification(String username, String password) {
+        updateStatus("Logging in... ");
+        ClientApp.getClientNetworking().loginRequest(username, password);
     }
+
+    private void updateStatus(String message) {
+        statusLabel.setText(message);
+    }
+
     private void showJeSMS(Stage stage) {
         JeSMSView view = new JeSMSView();
         new JeSMSController(view);

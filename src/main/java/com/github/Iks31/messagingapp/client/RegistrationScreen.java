@@ -1,5 +1,6 @@
 package com.github.Iks31.messagingapp.client;
 
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -31,6 +32,17 @@ public class RegistrationScreen implements UI {
                 confrimPasswordLabel, confirmPasswordField, statusLabel, submitBtn, clrBtn, backBtn);
         vbox.setAlignment(Pos.CENTER);
 
+        ClientApp.getClientNetworking().setMessageHandler(message -> {
+            if ("REGISTER_SUCCESS".equals(message.getFlag())) {
+                Platform.runLater(() -> {
+                    statusLabel.setText("Registration Successful");
+                    clrBtn.fire();
+                });
+            } else if ("REGISTER_FAILURE".equals(message.getFlag())) {
+                Platform.runLater(() -> statusLabel.setText((String) message.getContent()));
+            }
+        });
+
         Scene scene = new Scene(vbox, 600, 400);
         scene.getStylesheets().add("style.css");
         return scene;
@@ -40,13 +52,11 @@ public class RegistrationScreen implements UI {
         statusLabel.setText("");
         if (username.length() < 5 || username.length() > 15 || password.length() < 5 || password.length() > 15) {
             statusLabel.setText("Invalid Username/Password");
-            // Clear fields
         } else if (!password.equals(confirmedPassword)) {
             statusLabel.setText("Passwords do not match");
         } else {
-            System.out.println("Registration successful");
-            // Register user using networking
-            // Inform user of successful registration
+            statusLabel.setText("Registration Successful");
+            ClientApp.getClientNetworking().registrationRequest(username, password);
         }
 
     }
