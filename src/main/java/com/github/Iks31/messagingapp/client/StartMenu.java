@@ -1,5 +1,6 @@
 package com.github.Iks31.messagingapp.client;
 
+import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -22,12 +23,22 @@ public class StartMenu implements UI {
         TextButton aboutBtn = new TextButton("About", "button-primary");
         aboutBtn.setOnAction(e -> {stage.setScene(new AboutScreen().getScene(stage));});
 
-        vbox.getChildren().addAll(loginBtn, registerBtn, aboutBtn);
+        Label serverConnectionStatus = new Label("");
+
+        vbox.getChildren().addAll(loginBtn, registerBtn, aboutBtn, serverConnectionStatus);
         vbox.setSpacing(10);
         vbox.setAlignment(Pos.CENTER);
 
         Scene scene = new Scene(vbox, DEFAULT_WIDTH, DEFAULT_HEIGHT);
         scene.getStylesheets().add("style.css");
+
+        ClientApp.getClientNetworking().setMessageHandler(message -> {
+            if ("INIT_SUCCESS".equals(message.getFlag())) {
+                Platform.runLater(() -> {serverConnectionStatus.setText((String) message.getContent());});
+            }
+        });
+
+
         return scene;
     }
 }
