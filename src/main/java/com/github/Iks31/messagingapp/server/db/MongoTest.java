@@ -1,12 +1,39 @@
 package com.github.Iks31.messagingapp.server.db;
 
+import com.mongodb.*;
 import com.mongodb.client.*;
 import com.mongodb.MongoException;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerApi;
 import com.mongodb.ServerApiVersion;
+import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.model.DeleteOneModel;
+import com.mongodb.client.model.InsertOneModel;
+import com.mongodb.client.model.ReplaceOneModel;
+import com.mongodb.client.model.UpdateOneModel;
+import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.InsertManyOptions;
+import com.mongodb.client.model.InsertOneOptions;
+import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.Updates;
+import com.mongodb.client.result.UpdateResult;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertManyResult;
+import com.mongodb.client.result.InsertOneResult;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.*;
+
+import static com.mongodb.client.model.Accumulators.push;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Updates.set;
+import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
+import org.bson.conversions.Bson;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -14,7 +41,7 @@ import java.util.List;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
-import java.util.Iterator;
+import java.util.concurrent.Flow;
 
 public class MongoTest {
     static String uri = "mongodb+srv://ikerdz3101:<dbpassword>@jesmscluster0.9ownp4i.mongodb.net/?retryWrites=true&w=majority&appName=JeSMScluster0";
@@ -23,8 +50,7 @@ public class MongoTest {
 
 
 public static void main(String[] args) {
-    getconversations("user1");
-    login("user1", "passwor");
+
 }
     public static void connect()
     {
@@ -61,7 +87,7 @@ public static void main(String[] args) {
         }
     }
 
-    public static String getconversations(String username) {
+    public static String getConversations(String username) {
         if (db == null) {
             connect();
         }
@@ -101,41 +127,111 @@ public static void main(String[] args) {
         }
     }
 
-    //TODO need to change the Document that is inserted into one that fits the format of the conversations documents
-    public static void createconversation(String username, String message)
+    public static void newMessage(String content, String username, ArrayList<String> users)
+    {
+        try{
+            if (db == null) {
+                connect();
+            }
+            MongoCollection<Document> collection = Collection("conversations");
+            Date time = Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant());
+            Bson update = new Document("content", content)
+                            .append("sender", username)
+                            .append("timestamp", time)
+                            .append("readBy", new ArrayList<String>())
+                            .append("edited", false)
+                            .append("isDeleted", false);
+            collection.updateOne(eq("users",users), Updates.addToSet("messages", update));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    public static void createConversation(ArrayList<String> users)
     {
         try {
             if (db == null) {
                 connect();
             }
 
+            if(conversationExists(users)){
+                System.out.println("conversation already exists");
+                return;
+            }
             // Creating the document
             // to be inserted
 
             MongoCollection<Document> collection = Collection("conversations");
-            Document document = new Document("MessageID",
-                                            "2")
-                    .append("ChatID", "Open-Source database")
-                    .append("UserID","")
-                    .append("Content","")
-                    .append("sentAt","")
-                    .append("readBy",new Document("UserID","").append("readAt",""))
-                    .append("status","")
-                    .append("editedAt","")
-                    .append("deleted","");
+            Document document = new Document("users", users)
+                    .append("messages", new ArrayList<>());
 
 
             collection.insertOne(document);
 
             System.out.println(
-                    "Document inserted Successfully");
+                    "Conversation created successfully");
         }
         catch (Exception e) {
             System.out.println(
-                    "Document insertion failed");
+                    "Conversation unsuccessful");
             System.out.println(e);
         }
     }
+
+    public static boolean conversationExists(ArrayList<String> users){
+        try{
+            if (db == null) {
+                connect();
+            }
+            MongoCollection<Document> collection = Collection("conversations");
+            Document user = collection.find(eq("users", users)).first();
+            if(user !=null)return true;
+            else return false;
+        }
+        catch (Exception e) {
+
+        }
+        return true;
+    }
+
+    public static void addUser(ArrayList<String> users, String username) {
+        try{
+            if (db == null) {
+                connect();
+            }
+            MongoCollection<Document> collection = Collection("conversations");
+            ArrayList<String> newGroup = (ArrayList<String>)users.clone();
+            newGroup.add(username);
+            if(conversationExists(newGroup)){
+                System.out.println("conversation already exists");
+                return;
+            }
+            collection.updateOne(eq("users", users), Updates.addToSet("users", username));
+        }catch (Exception e) {
+
+        }
+    }
+
+    public static void removeUser(ArrayList<String> users, String username) {
+        try{
+            if (db == null) {
+                connect();
+            }
+            MongoCollection<Document> collection = Collection("conversations");
+            ArrayList<String> newGroup = (ArrayList<String>)users.clone();
+            newGroup.remove(username);
+            if(conversationExists(newGroup)){
+                System.out.println("conversation already exists");
+                return;
+            }
+            collection.updateOne(eq("users", users), Updates.pull("users", username));
+
+        }catch (Exception e) {
+
+        }
+    }
+
 
     public static void displayCollections()
     {
