@@ -1,9 +1,9 @@
 package com.github.Iks31.messagingapp.server;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import com.github.Iks31.messagingapp.common.NetworkMessage;
+
+import java.io.*;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
@@ -30,7 +30,7 @@ public class Server implements Runnable {
     Dictionary<String,ConnectionHandler> connection;
 
     public Server() {
-        connections = new ArrayList<ConnectionHandler>();
+        connections = new ArrayList<>();
         done = false;
     }
 
@@ -38,63 +38,33 @@ public class Server implements Runnable {
         try {
             server = new ServerSocket(9999);
             pool = Executors.newCachedThreadPool();
-            System.out.println("com.github.Iks31.messagingapp.server.Server started on port 9999...");
-            while(!done){
+            System.out.println("[START] Server started on port 9999...");
+            while(!done) {
                 Socket client = server.accept();
-                System.out.println("Accepted connection from " + client.getInetAddress());// returns client socket
-                //login
-                BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-                PrintWriter out = new PrintWriter(client.getOutputStream(), true);
+                System.out.println("[CONNECTION] Accepted connection from " + client.getInetAddress()); // returns client socket
+                noOfUsers++;
 
-                out.println("Please enter nickname:");
-                out.flush();
-                String nickname = in.readLine();
-                ConnectionHandler handler = null;
-                if (nickname != null && !nickname.trim().isEmpty()) {
-                    handler = new ConnectionHandler(client,nickname);
-                    connections.add(handler);
-                    System.out.println(handler.getUID());
-                    pool.execute(handler);
-                } else {
-                    out.println("Invalid nickname. Connection closed.");
-                    client.close();
-                }
+                ObjectOutputStream oos = new ObjectOutputStream(client.getOutputStream());
+                oos.flush();
+                ObjectInputStream ois = new ObjectInputStream(client.getInputStream());
+
+                oos.writeObject(new NetworkMessage("INIT_SUCCESS", "You have successfully connected to a JeSMS server!"));
+                oos.flush();
+                ConnectionHandler handler = new ConnectionHandler(client, client.getInetAddress(), ois, oos);
+                connections.add(handler);
+                pool.execute(handler);
             }
         } catch (Exception e) {
             e.printStackTrace();
             shutDown();
         }
     }
-    public String login(Socket client) {
-        while(!done){
-            try{
-                PrintWriter out = new PrintWriter(client.getOutputStream(), true); //get what the client is outputting
-                BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));//pass inputstreamreader and need to pass
-                // inputstream got from client.get
-                //out.println("hey" ); to send
-                //in.readLine();  to receive
-                out.println("Pls enter nickname");
-                return in.readLine();
-            }
-            catch (Exception e) {
-            }
-        }
-        return null;
-    }
 
     public void broadcast(String message){
 
         for(ConnectionHandler ch : connections){
             if(ch != null){
-                ch.sendMessage(message);
-            }
-        }
-    }
-
-    public void directMessage(String message, String name){
-        for(ConnectionHandler ch : connections){
-            if(ch.getUID().equals(name)){
-                ch.sendMessage(message);
+                ch.sendMessage(new NetworkMessage("BROADCAST", message));
             }
         }
     }
@@ -117,65 +87,121 @@ public class Server implements Runnable {
 
     class ConnectionHandler implements Runnable{
         private Socket client;
-        private BufferedReader in;
-        private PrintWriter out;
-        private String nickname;
+        private ObjectInputStream ois;
+        private ObjectOutputStream oos;
+        private InetAddress address;
+        private String username = null;
 
-        public ConnectionHandler(Socket client, String nickname){
+        public ConnectionHandler(Socket client, InetAddress address, ObjectInputStream ois, ObjectOutputStream oos){
             this.client = client;
-            this.nickname = nickname;
+            this.address = address;
+            this.ois = ois;
+            this.oos = oos;
         }
+
+        public InetAddress getAddress() {return address;}
+        public String getUsername() {return username;}
+
         @Override
         public void run() {
             try{
-                out = new PrintWriter(client.getOutputStream(), true); //get what the client is outputting
-                in = new BufferedReader(new InputStreamReader(client.getInputStream()));//pass inputstreamreader and need to pass
-                String message;
-                while((message = in.readLine()) != null){
-                    if(message.startsWith("/nick")){
-                        String[] messageSplit = message.split(" ", 2);
-                        if(messageSplit.length == 2){
-                            while(!(message = in.readLine()).contains("/leave")){
-                                directMessage(nickname + ": " + message, messageSplit[1]);
-                            }
-                        }
-                        else{
-                            System.out.println("Not a valid nickname");
-                        }
-                    }
-                    else if (message.startsWith("/quit")){
-                        broadcast(nickname + "left the chat");
+                NetworkMessage message;
+                while((message = (NetworkMessage) ois.readObject()) != null){
+                    System.out.println("[RECEIVED] " + message.getFlag() + " from " + address);
+                    if (message.getFlag().equals("DISCONNECT")) {
+                        System.out.println("[DISCONNECT] " + address + " disconnected from the server");
                         shutdown();
-                    }
-                    else{
-                        broadcast(nickname + ": " + message);
+                    } else if (message.getFlag().equals("LOGIN")) {
+                        serveLoginRequest((ArrayList<String>) message.getContent());
+                    } else if (message.getFlag().equals("REGISTER")) {
+                        serveRegistrationRequest((ArrayList<String>) message.getContent());
+                    } else if (message.getFlag().equals("GET_CONVERSATIONS")) {
+                        serveConversationsRequest();
+                    } else if (message.getFlag().equals("SEND_CHAT")) {
+                        serveSendChatRequest(message.getContent());
                     }
                 }
             }
-            catch(IOException e){
+            catch(IOException | ClassNotFoundException e){
                 shutdown();
             }
         }
-        public String getUID(){
-            return nickname;
-        }
-        public void sendMessage(String message){
-            out.println(message);
-        }
 
-        public void shutdown(){
+        public void sendMessage(NetworkMessage message){
             try {
-                in.close();
-                out.close();
-                if (!client.isClosed()) {
-                    client.close();
-                }
-            }catch(IOException e){
-                //ignore
+                oos.writeObject(message);
+                oos.flush();
+            } catch (IOException e) {
+                shutdown();
             }
         }
 
+        public void serveLoginRequest(ArrayList<String> credentials) {
+            System.out.println("[LOGIN ATTEMPT] " + address + " attempted to login");
+            boolean success = true; // Success here should be based on method call to database
+
+            if (success) {
+                username = credentials.getFirst();
+                System.out.println("[LOGIN SUCCESS] " + address + " successfully logged in as " + username);
+                sendMessage(new NetworkMessage("LOGIN_SUCCESS", null));
+            } else {
+                System.out.println("[LOGIN FAILURE] " + address + " failed to login");
+                sendMessage(new NetworkMessage("LOGIN_FAIL", "Username or password is incorrect. Please try again."));
+            }
+        }
+
+        public void serveRegistrationRequest(ArrayList<String> credentials) {
+            System.out.println("[REGISTER ATTEMPT] " + address + " attempted to register");
+            boolean success = true; // Success here should be based on method call to database
+            if (success) {
+                System.out.println("[REGISTER SUCCESS] " + address + " successfully registered an account");
+                sendMessage(new NetworkMessage("REGISTER_SUCCESS", null));
+            } else {
+                System.out.println("[REGISTER FAILURE] " + address + " failed to register an account");
+                sendMessage(new NetworkMessage("REGISTER_FAIL", null));
+            }
+        }
+
+        public void serveConversationsRequest() {
+            System.out.println("[GET CONVERSATIONS] " + address + " requested their conversations");
+            String conversations = "These are your conversations"; // Conversation message content here based on database result
+            sendMessage(new NetworkMessage("GET_CONVERSATIONS", conversations));
+        }
+
+        public void serveSendChatRequest(Object chatContent) {
+            System.out.println("[SEND CHAT] " + address + " sent a chat");
+            // Simulating active user
+            String userTemplate = "user123";
+            boolean realtime = false;
+            // More efficient way of searching for active recipient here
+            for (ConnectionHandler ch: connections) {
+                if (ch.getUsername().equals(userTemplate)) {
+                    realtime = true;
+                    break;
+                }
+            }
+            if (realtime) {
+                realtimeChat();
+            } else {
+                regularChat();
+            }
+        }
+
+        public void realtimeChat() {}
+        public void regularChat() {}
+
+        public void shutdown(){
+            try {
+                if (ois != null) {ois.close();};
+                if (oos != null) {oos.close();};
+                if (!client.isClosed()) {
+                    client.close();
+                }
+            } catch(IOException ignored) {}
+        }
+
     }
+
     public static void main(String[] args) {
         Server server = new Server();
         server.run();

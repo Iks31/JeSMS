@@ -7,6 +7,7 @@ import javafx.application.Platform;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
 
 public class ClientNetworking {
     private Socket socket;
@@ -30,6 +31,7 @@ public class ClientNetworking {
         listenerService = new MessageListenerService(ois);
         listenerService.setOnSucceeded(event -> {
             NetworkMessage msg = listenerService.getValue();
+            System.out.println(msg.getContent());
             if (handler != null) {
                 Platform.runLater(() -> handler.onMessage(msg));
             }
@@ -39,11 +41,15 @@ public class ClientNetworking {
 
         listenerService.setOnFailed(event -> {
            System.out.println("Connection failed or error in listener service");
+           ClientApp.showErrorDialog("Connection failed or error in listener service");
            event.getSource().getException().printStackTrace();
+            Platform.exit();
+            System.exit(0);
         });
         listenerService.start();
 
     }
+
     public void sendMessage(NetworkMessage msg) {
         try {
             oos.writeObject(msg);
@@ -53,12 +59,32 @@ public class ClientNetworking {
         }
     }
 
+    public void loginRequest(String username, String password) {
+        ArrayList<String> creds = new ArrayList<>();
+        creds.add(username);
+        creds.add(password);
+        sendMessage(new NetworkMessage("LOGIN", creds));
+    }
+
+    public void registrationRequest(String username, String password) {
+        ArrayList<String> creds = new ArrayList<>();
+        creds.add(username);
+        creds.add(password);
+        sendMessage(new NetworkMessage("REGISTER", creds));
+    }
+
     public void close() {
         try {
+            if (oos != null) {
+                oos.writeObject(new NetworkMessage("DISCONNECT", "Client shutting down"));
+                oos.flush();
+            }
             if (listenerService != null) {
                 listenerService.cancel();
             }
-            if (socket != null) socket.close();
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
