@@ -1,8 +1,7 @@
-package com.github.Iks31.messagingapp.client;
+package com.github.Iks31.messagingapp.client.scenes;
 
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.stage.Stage;
 
 public class DefaultScene extends Scene {
     public DefaultScene(Parent root, Integer width, Integer height) {

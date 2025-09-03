@@ -1,4 +1,4 @@
-package com.github.Iks31.messagingapp.client;
+package com.github.Iks31.messagingapp.client.ui_components;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;

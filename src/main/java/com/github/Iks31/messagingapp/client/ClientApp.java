@@ -1,9 +1,9 @@
 package com.github.Iks31.messagingapp.client;
 
 
+import com.github.Iks31.messagingapp.client.scenes.StartMenu;
 import javafx.application.Application;
 import javafx.concurrent.Task;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 

@@ -1,5 +1,6 @@
-package com.github.Iks31.messagingapp.client;
+package com.github.Iks31.messagingapp.client.scenes;
 
+import com.github.Iks31.messagingapp.client.UI;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;

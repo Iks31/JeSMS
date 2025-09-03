@@ -1,8 +1,9 @@
-package com.github.Iks31.messagingapp.client;
+package com.github.Iks31.messagingapp.client.scenes;
 
+import com.github.Iks31.messagingapp.client.UI;
+import com.github.Iks31.messagingapp.client.ui_components.BackButton;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;

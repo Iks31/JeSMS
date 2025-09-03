@@ -1,6 +1,5 @@
-package com.github.Iks31.messagingapp.client;
+package com.github.Iks31.messagingapp.client.ui_components;
 
-import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 
 public class ClearButton extends TextButton {

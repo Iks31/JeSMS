@@ -1,51 +1,26 @@
 package com.github.Iks31.messagingapp.server.db;
 
-import com.mongodb.*;
 import com.mongodb.client.*;
-import com.mongodb.MongoException;
-import com.mongodb.ConnectionString;
-import com.mongodb.MongoClientSettings;
-import com.mongodb.ServerApi;
-import com.mongodb.ServerApiVersion;
-import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.MongoClient;
-import com.mongodb.client.model.DeleteOneModel;
-import com.mongodb.client.model.InsertOneModel;
-import com.mongodb.client.model.ReplaceOneModel;
-import com.mongodb.client.model.UpdateOneModel;
-import com.mongodb.client.model.DeleteOptions;
-import com.mongodb.client.model.InsertManyOptions;
-import com.mongodb.client.model.InsertOneOptions;
-import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
-import com.mongodb.client.result.UpdateResult;
-import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.InsertManyResult;
-import com.mongodb.client.result.InsertOneResult;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 
-import static com.mongodb.client.model.Accumulators.push;
 import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Updates.set;
-import com.mongodb.client.result.UpdateResult;
+
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
-import java.util.concurrent.Flow;
-
-public class MongoTest {
+public class MongoDatabase {
     static String uri = "mongodb+srv://ikerdz3101:<dbpassword>@jesmscluster0.9ownp4i.mongodb.net/?retryWrites=true&w=majority&appName=JeSMScluster0";
-    static MongoDatabase db;
+    static com.mongodb.client.MongoDatabase db;
     private static MongoClient mongoClient;
 
 
@@ -66,7 +41,7 @@ public static void main(String[] args) {
             }
 
             // Optionally connect to a specific database
-            db = mongoClient.getDatabase("JeSMS"); // Replace "test" with your DB name
+            db = mongoClient.getDatabase("JeSMS");
             System.out.println("🔍 Using database: " + db.getName());
         } catch (Exception e) {
             System.err.println("❌ Connection failed");}
