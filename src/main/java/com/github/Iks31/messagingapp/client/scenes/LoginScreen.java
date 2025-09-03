@@ -62,8 +62,11 @@ public class LoginScreen implements UI {
         ClientApp.getClientNetworking().setMessageHandler(msg -> {
             if ("LOGIN_SUCCESS".equals(msg.getFlag())) {
                 Platform.runLater(() -> showJeSMS(stage));
-            } else if ("LOGIN_FAILURE".equals(msg.getFlag())) {
-                Platform.runLater(() -> updateStatus((String) msg.getContent()));
+            } else if ("LOGIN_FAIL".equals(msg.getFlag())) {
+                Platform.runLater(() -> {
+                    updateStatus((String) msg.getContent());
+                    clrBtn.fire();
+                });
             }
         });
 
