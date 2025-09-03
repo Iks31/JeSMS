@@ -1,5 +1,6 @@
 package com.github.Iks31.messagingapp.client;
 
+import com.github.Iks31.messagingapp.client.scenes.JeSMSView;
 import javafx.collections.FXCollections;
 
 public class JeSMSController {

@@ -1,9 +1,13 @@
-package com.github.Iks31.messagingapp.client;
+package com.github.Iks31.messagingapp.client.scenes;
 
+import com.github.Iks31.messagingapp.client.ClientApp;
+import com.github.Iks31.messagingapp.client.ui_components.TextButton;
+import com.github.Iks31.messagingapp.client.UI;
+import com.github.Iks31.messagingapp.client.ui_components.BackButton;
+import com.github.Iks31.messagingapp.client.ui_components.ClearButton;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;

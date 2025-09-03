@@ -1,6 +1,7 @@
 package com.github.Iks31.messagingapp.server;
 
 import com.github.Iks31.messagingapp.common.NetworkMessage;
+import com.github.Iks31.messagingapp.server.db.MongoDatabase;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -10,13 +11,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-
 // Current server code analysis:
-// - Server will run similarly to current code and have a list of connections
 // - Server will accept connections initially regardless of login - inactivity for too long can disconnect a user to prevent too many connections while still not in
-// - Execution pool can be used to handle users connecting as before
-// - Main difference is connection handler code will work much differently
-// - Connection handler will read in and deserialize Network Message classes and then send relevant responses
 // - Ability to broadcast will be useful just not used very often
 // - Main challenge will be realtime messaging - inter thread communication needed to inform another connected user of a new message and update
 
@@ -138,8 +134,7 @@ public class Server implements Runnable {
 
         public void serveLoginRequest(ArrayList<String> credentials) {
             System.out.println("[LOGIN ATTEMPT] " + address + " attempted to login");
-            boolean success = true; // Success here should be based on method call to database
-
+            boolean success = true; // MongoDatabase.login(credentials.getFirst(), credentials.getLast());
             if (success) {
                 username = credentials.getFirst();
                 System.out.println("[LOGIN SUCCESS] " + address + " successfully logged in as " + username);

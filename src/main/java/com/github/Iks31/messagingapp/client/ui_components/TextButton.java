@@ -1,4 +1,4 @@
-package com.github.Iks31.messagingapp.client;
+package com.github.Iks31.messagingapp.client.ui_components;
 
 import javafx.animation.ScaleTransition;
 import javafx.scene.control.Button;
