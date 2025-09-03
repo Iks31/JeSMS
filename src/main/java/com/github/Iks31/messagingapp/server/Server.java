@@ -2,6 +2,7 @@ package com.github.Iks31.messagingapp.server;
 
 import com.github.Iks31.messagingapp.common.NetworkMessage;
 import com.github.Iks31.messagingapp.server.db.DBResult;
+import com.github.Iks31.messagingapp.server.db.MongoDatabase;
 import com.github.Iks31.messagingapp.server.db.MongoDatabase.*;
 
 import java.io.*;
@@ -28,11 +29,13 @@ public class Server implements Runnable {
     private ExecutorService pool;
     private int noOfUsers;
     Dictionary<String,ConnectionHandler> connection;
+    private MongoDatabase db;
 
 
     public Server() {
         connections = new ArrayList<>();
         done = false;
+        db = new MongoDatabase();
     }
 
     public void run(){
@@ -139,7 +142,7 @@ public class Server implements Runnable {
 
         public void serveLoginRequest(ArrayList<String> credentials) {
             System.out.println("[LOGIN ATTEMPT] " + address + " attempted to login");
-            DBResult<String> log = login(credentials.getFirst());
+            DBResult<String> log = db.login(credentials.getFirst());
             if (log.isSuccess() && log.getResult().getLast().equals(credentials.getLast())) {
                 username = credentials.getFirst();
                 System.out.println("[LOGIN SUCCESS] " + address + " successfully logged in as " + username);
@@ -153,7 +156,7 @@ public class Server implements Runnable {
         public void serveRegistrationRequest(ArrayList<String> credentials) {
             System.out.println("[REGISTER ATTEMPT] " + address + " attempted to register");
             boolean success = true;// Success here should be based on method call to database
-            DBResult<String> result = newUser(credentials.getFirst(), credentials.getLast());
+            DBResult<String> result = db.newUser(credentials.getFirst(), credentials.getLast());
             if (result.isSuccess()) {
                 System.out.println("[REGISTER SUCCESS] " + address + " successfully registered an account");
                 sendMessage(new NetworkMessage("REGISTER_SUCCESS", null));
@@ -165,7 +168,7 @@ public class Server implements Runnable {
 
         public void serveConversationsRequest() {
             System.out.println("[GET CONVERSATIONS] " + address + " requested their conversations");
-            DBResult<String> log = getConversations(username);
+            DBResult<String> log = db.getConversations(username);
             String conversations = "These are your conversations"; // Conversation message content here based on database result
             sendMessage(new NetworkMessage("GET_CONVERSATIONS", log.getResult().getLast()));
         }

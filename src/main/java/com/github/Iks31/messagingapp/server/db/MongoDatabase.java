@@ -26,10 +26,11 @@ public class MongoDatabase {
     static com.mongodb.client.MongoDatabase db;
     private static MongoClient mongoClient;
 
-public static void main(String[] args) {
-    DBResult log = login("ChickenIker");
-}
-    public static void connect()
+    public MongoDatabase() {
+        connect();
+    }
+
+    public void connect()
     {
 // Replace with your actual connection string
 
@@ -48,7 +49,7 @@ public static void main(String[] args) {
         } catch (Exception e) {
             System.err.println("❌ Connection failed");}
     }
-    public static MongoCollection<Document> Collection(
+    public MongoCollection<Document> Collection(
             String collectionName) {
 
         try {
@@ -64,7 +65,7 @@ public static void main(String[] args) {
         }
     }
 
-    public static DBResult<String> getConversations(String username) {
+    public DBResult<String> getConversations(String username) {
         try {
             if (db == null) {
                 connect();
@@ -87,7 +88,7 @@ public static void main(String[] args) {
 
     }
 
-    public static DBResult<String> login(String username) {
+    public DBResult<String> login(String username) {
         try{
             if (db == null) {
                 connect();
@@ -99,25 +100,9 @@ public static void main(String[] args) {
                 return new DBResult<>(false, "user does not exist");
             }
             else{
-                //TODO this is the version when the method returns purely the credentials in the result outside of JSON
                 ArrayList<String> credentials = new ArrayList<>();
-                String json = user.toJson();
-                Pattern pattern = Pattern.compile("\"(.*?)\"");
-                Matcher matcher = pattern.matcher(json);
-                String temp  ="";
-                while (matcher.find()) {
-                    System.out.println(matcher.group(1));
-                    if(temp.equals("user")){
-                        credentials.add(matcher.group(1));
-                    }
-                    if(temp.equals("password")){
-                        credentials.add(matcher.group(1));
-                    }
-                    temp = matcher.group(1);
-                }
-               //TODO this is the version if this method returns the JSON back to the server
-//                ArrayList<String> list = new ArrayList<>();
-//                list.add(json);
+                credentials.add(user.getString("user"));
+                credentials.add(user.getString("password"));
 
                 return new DBResult<>(true, "successfully retrieved credentials",credentials);
             }
@@ -127,7 +112,7 @@ public static void main(String[] args) {
         }
     }
 
-    public static DBResult<String> newMessage(String content, String username, ArrayList<String> users)
+    public  DBResult<String> newMessage(String content, String username, ArrayList<String> users)
     {
         try{
             if (db == null) {
@@ -148,7 +133,7 @@ public static void main(String[] args) {
         }
     }
 
-    public static DBResult<String> createConversation(ArrayList<String> users)
+    public DBResult<String> createConversation(ArrayList<String> users)
     {
         try {
             if (db == null) {
@@ -179,7 +164,7 @@ public static void main(String[] args) {
 
     }
 
-    public static boolean conversationExists(ArrayList<String> users){
+    public boolean conversationExists(ArrayList<String> users){
         try{
             if (db == null) {
                 connect();
@@ -195,7 +180,7 @@ public static void main(String[] args) {
         return true;
     }
 
-    public static DBResult<String> addUser(ArrayList<String> users, String username) {
+    public DBResult<String> addUser(ArrayList<String> users, String username) {
         try{
             if (db == null) {
                 connect();
@@ -214,7 +199,7 @@ public static void main(String[] args) {
         }
     }
 
-    public static DBResult<String> removeUser(ArrayList<String> users, String username) {
+    public DBResult<String> removeUser(ArrayList<String> users, String username) {
         try{
             if (db == null) {
                 connect();
@@ -233,7 +218,7 @@ public static void main(String[] args) {
         }
     }
 
-    public static DBResult<String> newUser(String username, String password) {
+    public DBResult<String> newUser(String username, String password) {
         try{
             if(db == null) {
                 connect();
@@ -255,7 +240,7 @@ public static void main(String[] args) {
         }
     }
 
-    public static void displayCollections()
+    public void displayCollections()
     {
 
         try {
@@ -283,4 +268,7 @@ public static void main(String[] args) {
         }
     }
 
+    public void shutDown(){
+        mongoClient.close();
+    }
 }
