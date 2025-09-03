@@ -139,7 +139,6 @@ public class Server implements Runnable {
 
         public void serveLoginRequest(ArrayList<String> credentials) {
             System.out.println("[LOGIN ATTEMPT] " + address + " attempted to login");
-            boolean success = true; // MongoDatabase.login(credentials.getFirst(), credentials.getLast());
             DBResult<String> log = login(credentials.getFirst());
             if (log.isSuccess() && log.getResult().getLast().equals(credentials.getLast())) {
                 username = credentials.getFirst();
