@@ -48,6 +48,7 @@ public class ClientApp extends Application {
     @Override
     public void stop() throws Exception {
         super.stop();
+
         clientNetworking.close();
     }
 
