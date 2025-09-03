@@ -4,6 +4,7 @@ import com.mongodb.client.*;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.Updates;
 
+import java.lang.reflect.Array;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -14,6 +15,8 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -23,9 +26,8 @@ public class MongoDatabase {
     static com.mongodb.client.MongoDatabase db;
     private static MongoClient mongoClient;
 
-
 public static void main(String[] args) {
-
+    DBResult log = login("ChickenIker");
 }
     public static void connect()
     {
@@ -35,14 +37,14 @@ public static void main(String[] args) {
             mongoClient = MongoClients.create(uri);
             System.out.println("✅ Connected to MongoDB!");
 
-            // List all databases
-            for (String dbName : mongoClient.listDatabaseNames()) {
-                System.out.println("📁 Database: " + dbName);
-            }
-
-            // Optionally connect to a specific database
-            db = mongoClient.getDatabase("JeSMS");
-            System.out.println("🔍 Using database: " + db.getName());
+//            // List all databases
+//            for (String dbName : mongoClient.listDatabaseNames()) {
+//                System.out.println("📁 Database: " + dbName);
+//            }
+//
+//            // Optionally connect to a specific database
+             db = mongoClient.getDatabase("JeSMS");
+//            System.out.println("🔍 Using database: " + db.getName());
         } catch (Exception e) {
             System.err.println("❌ Connection failed");}
     }
@@ -62,47 +64,70 @@ public static void main(String[] args) {
         }
     }
 
-    public static String getConversations(String username) {
-        if (db == null) {
-            connect();
-        }
-        MongoCollection<Document> collection = Collection("conversations");
-        ArrayList<Document> conversations = new ArrayList<>();
-
+    public static DBResult<String> getConversations(String username) {
         try {
+            if (db == null) {
+                connect();
+            }
+            MongoCollection<Document> collection = Collection("conversations");
+            ArrayList<Document> conversations = new ArrayList<>();
+
             FindIterable<Document> iterable = collection.find(eq("users", username));
             MongoCursor<Document> mongoCursor = iterable.iterator();
             while (mongoCursor.hasNext()) {
                 conversations.add(mongoCursor.next());
             }
+            String json = conversations.getFirst().toJson();
+            ArrayList<String> list = new ArrayList<>();
+            list.add(json);
+            return new DBResult<>(true, "successfully retrieved conversations",list);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            return new DBResult<>(false,e);
         }
 
-        String json = conversations.getFirst().toJson();
-        System.out.println(json);
-        return json;
     }
 
-    public static boolean login(String username, String password) {
-        if (db == null) {
-            connect();
-        }
-
-        MongoCollection<Document> collection = Collection("users");
-
+    public static DBResult<String> login(String username) {
         try{
-            Document user = collection.find(and(eq("user", username),eq("password", password))).first();
-            if(user !=null)System.out.println("login success");
-            else System.out.println("login failed");
-            return user != null;
+            if (db == null) {
+                connect();
+            }
+
+            MongoCollection<Document> collection = Collection("users");
+            Document user = collection.find(eq("user", username)).first();
+            if(user == null){
+                return new DBResult<>(false, "user does not exist");
+            }
+            else{
+                //TODO this is the version when the method returns purely the credentials in the result outside of JSON
+                ArrayList<String> credentials = new ArrayList<>();
+                String json = user.toJson();
+                Pattern pattern = Pattern.compile("\"(.*?)\"");
+                Matcher matcher = pattern.matcher(json);
+                String temp  ="";
+                while (matcher.find()) {
+                    System.out.println(matcher.group(1));
+                    if(temp.equals("user")){
+                        credentials.add(matcher.group(1));
+                    }
+                    if(temp.equals("password")){
+                        credentials.add(matcher.group(1));
+                    }
+                    temp = matcher.group(1);
+                }
+               //TODO this is the version if this method returns the JSON back to the server
+//                ArrayList<String> list = new ArrayList<>();
+//                list.add(json);
+
+                return new DBResult<>(true, "successfully retrieved credentials",credentials);
+            }
         } catch (Exception e) {
             System.err.println("login unsuccessful");
-            return false;
+            return new DBResult<>(false,e);
         }
     }
 
-    public static void newMessage(String content, String username, ArrayList<String> users)
+    public static DBResult<String> newMessage(String content, String username, ArrayList<String> users)
     {
         try{
             if (db == null) {
@@ -117,13 +142,13 @@ public static void main(String[] args) {
                             .append("edited", false)
                             .append("isDeleted", false);
             collection.updateOne(eq("users",users), Updates.addToSet("messages", update));
+            return new DBResult<>(true, "successfully sent message");
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            return new DBResult<>(false,e);
         }
     }
 
-
-    public static void createConversation(ArrayList<String> users)
+    public static DBResult<String> createConversation(ArrayList<String> users)
     {
         try {
             if (db == null) {
@@ -132,7 +157,7 @@ public static void main(String[] args) {
 
             if(conversationExists(users)){
                 System.out.println("conversation already exists");
-                return;
+                return new DBResult<>(false,null,null);
             }
             // Creating the document
             // to be inserted
@@ -146,12 +171,12 @@ public static void main(String[] args) {
 
             System.out.println(
                     "Conversation created successfully");
+            return new DBResult<>(true, "successfully created conversation");
         }
         catch (Exception e) {
-            System.out.println(
-                    "Conversation unsuccessful");
-            System.out.println(e);
+            return new DBResult<>(false,e);
         }
+
     }
 
     public static boolean conversationExists(ArrayList<String> users){
@@ -170,7 +195,7 @@ public static void main(String[] args) {
         return true;
     }
 
-    public static void addUser(ArrayList<String> users, String username) {
+    public static DBResult<String> addUser(ArrayList<String> users, String username) {
         try{
             if (db == null) {
                 connect();
@@ -180,15 +205,16 @@ public static void main(String[] args) {
             newGroup.add(username);
             if(conversationExists(newGroup)){
                 System.out.println("conversation already exists");
-                return;
+                return new DBResult<>(false,"conversation already exists");
             }
             collection.updateOne(eq("users", users), Updates.addToSet("users", username));
+            return new DBResult<>(true, "successfully added user");
         }catch (Exception e) {
-
+            return new DBResult<>(false,e);
         }
     }
 
-    public static void removeUser(ArrayList<String> users, String username) {
+    public static DBResult<String> removeUser(ArrayList<String> users, String username) {
         try{
             if (db == null) {
                 connect();
@@ -198,15 +224,36 @@ public static void main(String[] args) {
             newGroup.remove(username);
             if(conversationExists(newGroup)){
                 System.out.println("conversation already exists");
-                return;
+                return new DBResult<>(false, "conversation already exists");
             }
             collection.updateOne(eq("users", users), Updates.pull("users", username));
-
+            return new DBResult<>(true, "successfully removed user");
         }catch (Exception e) {
-
+            return new DBResult<>(false,e);
         }
     }
 
+    public static DBResult<String> newUser(String username, String password) {
+        try{
+            if(db == null) {
+                connect();
+            }
+            MongoCollection<Document> collection = Collection("users");
+
+            Document user = collection.find(eq("user", username)).first();
+            if(user ==null){
+                Document newUser = new Document("user", username).append("password", password);
+                collection.insertOne(newUser);
+                return new DBResult<>(true, "successfully created user");
+            }
+            else{
+                return new DBResult<>(false, "user already exists");
+            }
+        }
+        catch (Exception e) {
+            return new DBResult<>(false,e);
+        }
+    }
 
     public static void displayCollections()
     {

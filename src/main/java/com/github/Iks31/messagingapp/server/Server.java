@@ -1,7 +1,8 @@
 package com.github.Iks31.messagingapp.server;
 
 import com.github.Iks31.messagingapp.common.NetworkMessage;
-import com.github.Iks31.messagingapp.server.db.MongoDatabase;
+import com.github.Iks31.messagingapp.server.db.DBResult;
+import com.github.Iks31.messagingapp.server.db.MongoDatabase.*;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -10,6 +11,9 @@ import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import static com.github.Iks31.messagingapp.server.db.MongoDatabase.*;
+
 
 // Current server code analysis:
 // - Server will accept connections initially regardless of login - inactivity for too long can disconnect a user to prevent too many connections while still not in
@@ -24,6 +28,7 @@ public class Server implements Runnable {
     private ExecutorService pool;
     private int noOfUsers;
     Dictionary<String,ConnectionHandler> connection;
+
 
     public Server() {
         connections = new ArrayList<>();
@@ -135,7 +140,8 @@ public class Server implements Runnable {
         public void serveLoginRequest(ArrayList<String> credentials) {
             System.out.println("[LOGIN ATTEMPT] " + address + " attempted to login");
             boolean success = true; // MongoDatabase.login(credentials.getFirst(), credentials.getLast());
-            if (success) {
+            DBResult<String> log = login(credentials.getFirst());
+            if (log.isSuccess() && log.getResult().getLast().equals(credentials.getLast())) {
                 username = credentials.getFirst();
                 System.out.println("[LOGIN SUCCESS] " + address + " successfully logged in as " + username);
                 sendMessage(new NetworkMessage("LOGIN_SUCCESS", null));
@@ -147,8 +153,9 @@ public class Server implements Runnable {
 
         public void serveRegistrationRequest(ArrayList<String> credentials) {
             System.out.println("[REGISTER ATTEMPT] " + address + " attempted to register");
-            boolean success = true; // Success here should be based on method call to database
-            if (success) {
+            boolean success = true;// Success here should be based on method call to database
+            DBResult<String> result = newUser(credentials.getFirst(), credentials.getLast());
+            if (result.isSuccess()) {
                 System.out.println("[REGISTER SUCCESS] " + address + " successfully registered an account");
                 sendMessage(new NetworkMessage("REGISTER_SUCCESS", null));
             } else {
@@ -159,8 +166,9 @@ public class Server implements Runnable {
 
         public void serveConversationsRequest() {
             System.out.println("[GET CONVERSATIONS] " + address + " requested their conversations");
+            DBResult<String> log = getConversations(username);
             String conversations = "These are your conversations"; // Conversation message content here based on database result
-            sendMessage(new NetworkMessage("GET_CONVERSATIONS", conversations));
+            sendMessage(new NetworkMessage("GET_CONVERSATIONS", log.getResult().getLast()));
         }
 
         public void serveSendChatRequest(Object chatContent) {
@@ -183,7 +191,9 @@ public class Server implements Runnable {
         }
 
         public void realtimeChat() {}
-        public void regularChat() {}
+        public void regularChat() {
+
+        }
 
         public void shutdown(){
             try {
