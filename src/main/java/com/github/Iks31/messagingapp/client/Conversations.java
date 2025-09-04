@@ -3,6 +3,7 @@ package com.github.Iks31.messagingapp.client;
 import java.util.ArrayList;
 
 public class Conversations {
+    // directly copies the structure of the conversation collection
     private String conversationId;
     private ArrayList<String> users;
     private ArrayList<Message> messages;
