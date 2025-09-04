@@ -50,6 +50,7 @@
       <artifactId>mongodb-crypt</artifactId>
       <version>${mongodb-crypt.version}</version>
     </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
