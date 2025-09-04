@@ -22,7 +22,7 @@ import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
 public class MongoDatabase {
-    static String uri = "mongodb+srv://ikerdz3101:Gooner4Life67@jesmscluster0.9ownp4i.mongodb.net/?retryWrites=true&w=majority&appName=JeSMScluster0";
+    static String uri = "mongodb+srv://ikerdz3101:<dbpassword>@jesmscluster0.9ownp4i.mongodb.net/?retryWrites=true&w=majority&appName=JeSMScluster0";
     static com.mongodb.client.MongoDatabase db;
     private static MongoClient mongoClient;
 

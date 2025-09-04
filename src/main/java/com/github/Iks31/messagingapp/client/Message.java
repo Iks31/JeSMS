@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 public class Message {
+    // directly copies the structure of the message embedded within the conversation document
     private String id;
     private String content;
     private String sender;
