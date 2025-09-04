@@ -79,6 +79,7 @@ public class MongoDatabase {
             while (mongoCursor.hasNext()) {
                 list.add(mongoCursor.next().toJson());
             }
+            System.out.println(list);
             return new DBResult<>(true, "successfully retrieved conversations",list);
         } catch (Exception e) {
             return new DBResult<>(false,e);
@@ -131,7 +132,7 @@ public class MongoDatabase {
         }
     }
 
-    public DBResult<String> createConversation(ArrayList<String> users)
+    public DBResult<String> createConversation(String conversationName,ArrayList<String> users)
     {
         try {
             if (db == null) {
@@ -147,6 +148,7 @@ public class MongoDatabase {
 
             MongoCollection<Document> collection = Collection("conversations");
             Document document = new Document("users", users)
+                    .append("conversationName", conversationName)
                     .append("messages", new ArrayList<>());
 
 
