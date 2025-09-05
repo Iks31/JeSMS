@@ -13,11 +13,21 @@ public class ChatMessage {
     @JsonProperty("sender")
     public String sender;
     @JsonProperty("timestamp")
-    public Instant timestamp;
+    public MongoLong timestamp;
     @JsonProperty("readBy")
     public List<String> readBy;
     @JsonProperty("edited")
     public boolean edited;
     @JsonProperty("isDeleted")
     public boolean isDeleted;
+
+    public Instant getTimestampInstant() {
+        return Instant.ofEpochMilli(Long.parseLong(timestamp.value));
+    }
+
+    public static class MongoLong {
+        @JsonProperty("$numberLong")
+        public String value; // Mongo sends it as a string
+    }
 }
+

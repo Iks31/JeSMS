@@ -124,7 +124,7 @@ public class Server implements Runnable {
                     } else if (message.getFlag().equals("GET_CONVERSATIONS")) {
                         serveConversationsRequest();
                     } else if (message.getFlag().equals("SEND_CHAT")) {
-                        serveSendChatRequest(message.getContent());
+                        serveSendChatRequest((ArrayList<Object>) message.getContent());
                     }
                 }
             }
@@ -179,14 +179,18 @@ public class Server implements Runnable {
             }
         }
 
-        public void serveSendChatRequest(Object chatContent) {
+        public void serveSendChatRequest(ArrayList<Object> chatContent) {
             System.out.println("[SEND CHAT] " + address + " sent a chat");
             // Simulating active user
-            String userTemplate = "user123";
+            //messageData
+            String groupName = chatContent.get(0).toString();
+            String sender = chatContent.get(1).toString();
+            ArrayList<String> users = (ArrayList<String>) chatContent.get(2);
+            String message = chatContent.get(3).toString();
             boolean realtime = false;
             // More efficient way of searching for active recipient here
             for (ConnectionHandler ch: connections) {
-                if (ch.getUsername().equals(userTemplate)) {
+                if (users.contains(ch.getUsername()) && !ch.getUsername().equals(sender)) {
                     realtime = true;
                     break;
                 }
@@ -194,13 +198,13 @@ public class Server implements Runnable {
             if (realtime) {
                 realtimeChat();
             } else {
-                regularChat();
+                regularChat(message,sender,users);
             }
         }
 
         public void realtimeChat() {}
-        public void regularChat() {
-
+        public void regularChat(String content, String sender, ArrayList<String> users) {
+            db.newMessage(content,sender,users);
         }
 
         public void shutdown(){
