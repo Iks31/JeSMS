@@ -16,6 +16,7 @@ public class ClientNetworking {
 
     private MessageListenerService listenerService;
     private MessageHandler handler;
+    private String username;
 
     public void setMessageHandler(MessageHandler handler) {
         this.handler = handler;
@@ -62,6 +63,7 @@ public class ClientNetworking {
         ArrayList<String> creds = new ArrayList<>();
         creds.add(username);
         creds.add(password);
+        this.username = username;
         sendMessage(new NetworkMessage("LOGIN", creds));
     }
 
@@ -74,6 +76,12 @@ public class ClientNetworking {
 
     public void conversationsRequest() {
         sendMessage(new NetworkMessage("GET_CONVERSATIONS", null));
+    }
+
+    //messageRequest sends a message over to the server to send a chat
+    public void messageRequest(ArrayList<Object> messageData) {
+        messageData.add(username);
+        sendMessage(new NetworkMessage("SEND_CHAT", messageData));
     }
 
     public void close() {
@@ -91,6 +99,9 @@ public class ClientNetworking {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    public String getUsername() {
+        return username;
     }
 
     private static class MessageListenerService extends Service<NetworkMessage> {
