@@ -13,6 +13,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.bson.Document;
+
 import static com.github.Iks31.messagingapp.server.db.MongoDatabase.*;
 
 
@@ -169,8 +171,12 @@ public class Server implements Runnable {
         public void serveConversationsRequest() {
             System.out.println("[GET CONVERSATIONS] " + address + " requested their conversations");
             DBResult<String> log = db.getConversations(username);
-            String conversations = "These are your conversations"; // Conversation message content here based on database result
-            sendMessage(new NetworkMessage("GET_CONVERSATIONS", log.getResult().getLast()));
+            if(log.isSuccess()){
+                sendMessage(new NetworkMessage("CONVERSATIONS_RECEIVED", log.getResult()));
+            }
+            else{
+                sendMessage(new NetworkMessage("CONVERSATIONS_NOT_RECEIVED", null));
+            }
         }
 
         public void serveSendChatRequest(Object chatContent) {

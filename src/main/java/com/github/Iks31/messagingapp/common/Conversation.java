@@ -4,9 +4,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 public class Conversation {
-    @JsonProperty("name")
-    public String conversationName;
+//    @JsonProperty("conversationName")
+//    public String conversationName;
+    @JsonProperty("_id")
+    public Object id;
     @JsonProperty("messages")
-    public List<String> messages;
+    public List<ChatMessage> messages;
+    @JsonProperty("users")
+    public List<String> users;
     // Example template of what Json mapping class may look like
 }

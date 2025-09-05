@@ -1,6 +1,12 @@
 package com.github.Iks31.messagingapp.client.scenes;
 
+import com.github.Iks31.messagingapp.client.ClientApp;
+import com.github.Iks31.messagingapp.client.ClientNetworking;
+import com.github.Iks31.messagingapp.client.ClientNetworking.*;
 import com.github.Iks31.messagingapp.client.UI;
+import com.github.Iks31.messagingapp.common.ChatMessage;
+import com.github.Iks31.messagingapp.common.Conversation;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
@@ -18,13 +24,13 @@ public class JeSMSView implements UI {
 
     // List of active conversations
     private final Label activeConversationsLabel = new Label("Active Conversations");
-    private final ListView<String> conversationsList = new ListView<>();
+    private final ListView<Conversation> conversationsList = new ListView<>();
     private final TextField activeConversationsFilter = new TextField();
     private final VBox conversationsContainer = new VBox(activeConversationsLabel, conversationsList, activeConversationsFilter);
 
     // Current conversation
     private final Label currConversationLabel = new Label("Current Conversation");
-    private final ListView<String> currMessagesList = new ListView<>();
+    private final ListView<ChatMessage> currMessagesList = new ListView<>();
     private final TextArea messageTextArea = new TextArea();
     private final Button sendMessageButton = new Button("Send Message");
     private final HBox sendMessageContainer = new HBox(messageTextArea, sendMessageButton);
@@ -73,7 +79,7 @@ public class JeSMSView implements UI {
     }
     public Button getFilterToggleButton () { return filterToggleButton; }
     public Button getSettingsButton () { return settingsButton; }
-    public ListView<String> getConversationsList () { return conversationsList; }
-    public ListView<String> getCurrMessagesList () { return currMessagesList; }
+    public ListView<Conversation> getConversationsList () { return conversationsList; }
+    public ListView<ChatMessage> getCurrMessagesList () { return currMessagesList; }
 
 }

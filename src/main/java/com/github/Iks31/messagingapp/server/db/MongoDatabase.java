@@ -75,12 +75,11 @@ public class MongoDatabase {
 
             FindIterable<Document> iterable = collection.find(eq("users", username));
             MongoCursor<Document> mongoCursor = iterable.iterator();
-            while (mongoCursor.hasNext()) {
-                conversations.add(mongoCursor.next());
-            }
-            String json = conversations.getFirst().toJson();
             ArrayList<String> list = new ArrayList<>();
-            list.add(json);
+            while (mongoCursor.hasNext()) {
+                list.add(mongoCursor.next().toJson());
+            }
+            System.out.println(list);
             return new DBResult<>(true, "successfully retrieved conversations",list);
         } catch (Exception e) {
             return new DBResult<>(false,e);
@@ -133,7 +132,7 @@ public class MongoDatabase {
         }
     }
 
-    public DBResult<String> createConversation(ArrayList<String> users)
+    public DBResult<String> createConversation(String conversationName,ArrayList<String> users)
     {
         try {
             if (db == null) {
@@ -149,6 +148,7 @@ public class MongoDatabase {
 
             MongoCollection<Document> collection = Collection("conversations");
             Document document = new Document("users", users)
+                    .append("conversationName", conversationName)
                     .append("messages", new ArrayList<>());
 
 
@@ -220,9 +220,6 @@ public class MongoDatabase {
 
     public DBResult<String> newUser(String username, String password) {
         try{
-            if(db == null) {
-                connect();
-            }
             MongoCollection<Document> collection = Collection("users");
 
             Document user = collection.find(eq("user", username)).first();
@@ -240,14 +237,20 @@ public class MongoDatabase {
         }
     }
 
+    public DBResult<String> readByUser(ArrayList<String> users, String username) {
+        //TODO need to figure a way to Identify a message to update the readBy field
+        try{
+            MongoCollection<Document> collection = Collection("messages");
+            collection.updateOne(eq("users",users), Updates.addToSet("messages.readBy", username));
+            return new DBResult<>(true, "successfully read message");
+        } catch (Exception e) {
+            return new DBResult<>(false,e);
+        }
+    }
     public void displayCollections()
     {
 
         try {
-            if (db == null) {
-                connect();
-            }
-
             System.out.println(
                     "Displaying the list"
                             + " of all collections");
