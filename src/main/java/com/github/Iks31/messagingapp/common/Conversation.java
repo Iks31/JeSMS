@@ -8,6 +8,8 @@ public class Conversation {
 //    public String conversationName;
     @JsonProperty("_id")
     public Object id;
+    @JsonProperty ("name")
+    public String name;
     @JsonProperty("messages")
     public List<ChatMessage> messages;
     @JsonProperty("users")

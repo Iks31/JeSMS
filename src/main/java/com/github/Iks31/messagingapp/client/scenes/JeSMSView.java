@@ -24,13 +24,13 @@ public class JeSMSView implements UI {
 
     // List of active conversations
     private final Label activeConversationsLabel = new Label("Active Conversations");
-    private final ListView<Conversation> conversationsList = new ListView<>();
+    private final ListView<String> conversationsList = new ListView<>();
     private final TextField activeConversationsFilter = new TextField();
     private final VBox conversationsContainer = new VBox(activeConversationsLabel, conversationsList, activeConversationsFilter);
 
     // Current conversation
     private final Label currConversationLabel = new Label("Current Conversation");
-    private final ListView<ChatMessage> currMessagesList = new ListView<>();
+    private ListView<String> currMessagesList = new ListView<>(); //changed to string as we just want to show the sender and message
     private final TextArea messageTextArea = new TextArea();
     private final Button sendMessageButton = new Button("Send Message");
     private final HBox sendMessageContainer = new HBox(messageTextArea, sendMessageButton);
@@ -79,7 +79,8 @@ public class JeSMSView implements UI {
     }
     public Button getFilterToggleButton () { return filterToggleButton; }
     public Button getSettingsButton () { return settingsButton; }
-    public ListView<Conversation> getConversationsList () { return conversationsList; }
-    public ListView<ChatMessage> getCurrMessagesList () { return currMessagesList; }
+    public ListView<String> getConversationsList () { return conversationsList; }
+    public ListView<String> getCurrMessagesList () { return currMessagesList; }
+    public TextArea getMessageTextArea () { return messageTextArea; }
 
 }

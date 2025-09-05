@@ -5,6 +5,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.Updates;
 
 import java.lang.reflect.Array;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -118,10 +119,10 @@ public class MongoDatabase {
                 connect();
             }
             MongoCollection<Document> collection = Collection("conversations");
-            Date time = Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant());
+            long date = Instant.now().toEpochMilli();
             Bson update = new Document("content", content)
                             .append("sender", username)
-                            .append("timestamp", time)
+                            .append("timestamp", date)
                             .append("readBy", new ArrayList<String>())
                             .append("edited", false)
                             .append("isDeleted", false);
@@ -147,8 +148,8 @@ public class MongoDatabase {
             // to be inserted
 
             MongoCollection<Document> collection = Collection("conversations");
-            Document document = new Document("users", users)
-                    .append("conversationName", conversationName)
+            Document document = new Document("name",conversationName)
+                    .append("users", users)
                     .append("messages", new ArrayList<>());
 
 
