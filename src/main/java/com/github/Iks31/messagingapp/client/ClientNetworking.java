@@ -47,7 +47,6 @@ public class ClientNetworking {
             System.exit(0);
         });
         listenerService.start();
-
     }
 
     public void sendMessage(NetworkMessage msg) {
@@ -71,6 +70,10 @@ public class ClientNetworking {
         creds.add(username);
         creds.add(password);
         sendMessage(new NetworkMessage("REGISTER", creds));
+    }
+
+    public void conversationsRequest() {
+        sendMessage(new NetworkMessage("GET_CONVERSATIONS", null));
     }
 
     public void close() {
