@@ -1,5 +1,6 @@
 package com.github.Iks31.messagingapp.client;
 
+import com.github.Iks31.messagingapp.common.ChatMessage;
 import com.github.Iks31.messagingapp.common.NetworkMessage;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -79,9 +80,8 @@ public class ClientNetworking {
     }
 
     //messageRequest sends a message over to the server to send a chat
-    public void messageRequest(ArrayList<Object> messageData) {
-        messageData.add(username);
-        sendMessage(new NetworkMessage("SEND_CHAT", messageData));
+    public void messageRequest(ArrayList<Object> conversationData) {
+        sendMessage(new NetworkMessage("SEND_CHAT", conversationData));
     }
 
     public void close() {

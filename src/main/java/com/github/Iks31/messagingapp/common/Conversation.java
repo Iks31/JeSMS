@@ -1,6 +1,7 @@
 package com.github.Iks31.messagingapp.common;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Conversation {
@@ -13,6 +14,7 @@ public class Conversation {
     @JsonProperty("messages")
     public List<ChatMessage> messages;
     @JsonProperty("users")
-    public List<String> users;
+    public ArrayList<String> users;
+
     // Example template of what Json mapping class may look like
 }
