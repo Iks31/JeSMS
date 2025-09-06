@@ -7,8 +7,8 @@ import com.github.Iks31.messagingapp.common.Conversation;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.bson.Document;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class JeSMSController {
@@ -34,23 +34,26 @@ public class JeSMSController {
             } else if ("CONVERSATIONS_NOT_RECEIVED".equals(msg.getFlag())) {
                 //TODO what happens when the conversations have not been retrieved
             }
+            if("REALTIME_CHAT".equals(msg.getFlag())){
+                Platform.runLater(() -> realTimeMessage((ArrayList<Object>)msg.getContent()));
+            }
         });
         ClientApp.getClientNetworking().conversationsRequest();
         view.getCreateConversationButton().setOnAction(e -> createConversation());
         //now event handlers have been added to to send the index of the conversation
         view.getSendMessageButton().setOnAction(e -> {
-            int index = view.getConversationsList().getSelectionModel().getSelectedIndex();
-            sendMsg(index);});
+
+            sendMsg();});
         view.getConversationsList().setOnMouseClicked(e -> {
-            int index = view.getConversationsList().getSelectionModel().getSelectedIndex();
-            messageDataSetup(index);
+            messageDataSetup();
         });
 
         // Update messages based on refresh
     }
 // Sets up the messages depending on what conversation is being viewed
-    public void messageDataSetup(int index) {
+    public void messageDataSetup() {
         Conversation currConversation;
+        int index = view.getConversationsList().getSelectionModel().getSelectedIndex();
         ObservableList<String> messages = FXCollections.observableArrayList();
         for(ChatMessage message: conversationsList.get(index).messages){
             messages.add(message.sender + ": " + message.content);
@@ -62,6 +65,16 @@ public class JeSMSController {
       //  view.getCurrMessagesList().setItems(FXCollections.observableArrayList("Hello", "Hi!", "What's Up?"));
     }
 
+    public void realTimeMessage(ArrayList<Object> content){
+        ChatMessage message = (ChatMessage)content.get(0);
+        ArrayList<String> users = (ArrayList<String>)content.get(1);
+        for(Conversation conversation : conversationsList){
+            if(users.equals(conversation.users)){
+                conversation.messages.add(message);
+            }
+        }
+        messageDataSetup();
+    }
 
     public void formatConversations(ArrayList<String> jsons) {
         ObjectMapper mapper = new ObjectMapper();
@@ -81,7 +94,8 @@ public class JeSMSController {
     }
     //new method to send a message after button has been clicked
     //creates a new message and adds it to the observable list and then calls again to reformat messages for user
-    public void sendMsg(int index) {
+    public void sendMsg() {
+        int index = view.getConversationsList().getSelectionModel().getSelectedIndex();
         Conversation currConversation = conversationsList.get(index);
         ChatMessage message = new ChatMessage();
         {
@@ -93,13 +107,12 @@ public class JeSMSController {
             message.isDeleted = false;
         }
         currConversation.messages.add(message);
-        ArrayList<Object> messageData = new ArrayList<>();
-        messageData.add(currConversation.name);
-        messageData.add(ClientApp.getClientNetworking().getUsername());
-        messageData.add(currConversation.users);
-        messageData.add(currConversation.messages.getLast().content);
-        ClientApp.getClientNetworking().messageRequest(messageData);
-        messageDataSetup(index);
+        ArrayList<Object> conversationData = new ArrayList<>();
+        conversationData.add(currConversation.name);
+        conversationData.add(currConversation.users);
+        conversationData.add(message);
+        ClientApp.getClientNetworking().messageRequest(conversationData);
+        messageDataSetup();
     }
     public void createConversation() {}
 }
