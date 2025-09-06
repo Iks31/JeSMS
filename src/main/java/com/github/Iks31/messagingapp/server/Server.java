@@ -1,5 +1,6 @@
 package com.github.Iks31.messagingapp.server;
 
+import com.github.Iks31.messagingapp.common.ChatMessage;
 import com.github.Iks31.messagingapp.common.NetworkMessage;
 import com.github.Iks31.messagingapp.server.db.DBResult;
 import com.github.Iks31.messagingapp.server.db.MongoDatabase;
@@ -184,9 +185,9 @@ public class Server implements Runnable {
             // Simulating active user
             //messageData
             String groupName = chatContent.get(0).toString();
-            String sender = chatContent.get(1).toString();
-            ArrayList<String> users = (ArrayList<String>) chatContent.get(2);
-            String message = chatContent.get(3).toString();
+            ArrayList<String> users = (ArrayList<String>) chatContent.get(1);
+            ChatMessage message = (ChatMessage)chatContent.get(2);
+            String sender = message.sender;
             boolean realtime = false;
             // More efficient way of searching for active recipient here
             for (ConnectionHandler ch: connections) {
@@ -196,13 +197,23 @@ public class Server implements Runnable {
                 }
             }
             if (realtime) {
-                realtimeChat();
+                realtimeChat(message,sender,users);
             } else {
-                regularChat(message,sender,users);
+                regularChat(message.content,sender,users);
             }
         }
 
-        public void realtimeChat() {}
+        public void realtimeChat(ChatMessage message, String sender, ArrayList<String> users) {
+            db.newMessage(message.content,sender,users);
+            ArrayList<Object> networkMessage = new ArrayList<>();
+            networkMessage.add(message);
+            networkMessage.add(users);
+            for(ConnectionHandler ch: connections){
+                if(!ch.getUsername().equals(sender)){
+                    ch.sendMessage(new NetworkMessage("REALTIME_CHAT", networkMessage));
+                }
+            }
+        }
         public void regularChat(String content, String sender, ArrayList<String> users) {
             db.newMessage(content,sender,users);
         }
