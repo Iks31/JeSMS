@@ -31,7 +31,7 @@ public class ClientApp extends Application {
 
         connectTask.setOnFailed(e -> {
             Throwable ex = connectTask.getException();
-            showErrorDialog("Could not connect to server: " + ex.getMessage());
+            showErrorDialog(Alert.AlertType.ERROR,"Connection Error", "Server Connection Problem","Could not connect to server: " + ex.getMessage());
         });
 
         new Thread(connectTask).start();
@@ -52,10 +52,10 @@ public class ClientApp extends Application {
         clientNetworking.close();
     }
 
-    public static void showErrorDialog(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Connection Error");
-        alert.setHeaderText("Server Connection Problem");
+    public static void showErrorDialog(Alert.AlertType type, String title, String headerText, String message) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(headerText);
         alert.setContentText(message);
         alert.showAndWait();
     }

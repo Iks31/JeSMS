@@ -6,7 +6,7 @@ The project consists of:
 - **Client:** A **JavaFX** desktop application that provides the user interface for sending and receiving messages.
 
 ## Features (Planned / In Progress)
-- [ ] com.github.Iks31.messagingapp.server.Server–client architecture  
+- [ ] Server–client architecture  
 - [ ] MongoDB backend for storing user and message data  
 - [ ] User authentication and account management  
 - [ ] Networking for message delivery  
@@ -16,7 +16,8 @@ The project consists of:
 ## Technologies Used
 - **Java 17+**  
 - **JavaFX** (Client UI)  
-- **MongoDB** (Database)  
+- **MongoDB** (Database)
+- **Jackson** (JSON Parsing)
 - **Maven** (Build tool)  
 
 ## Contributors
