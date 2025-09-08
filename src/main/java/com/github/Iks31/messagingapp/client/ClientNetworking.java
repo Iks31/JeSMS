@@ -6,6 +6,7 @@ import com.github.Iks31.messagingapp.common.NetworkMessage;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.application.Platform;
+import javafx.scene.control.Alert;
 
 import java.io.*;
 import java.net.Socket;
@@ -44,7 +45,7 @@ public class ClientNetworking {
 
         listenerService.setOnFailed(event -> {
            System.out.println("Connection failed or error in listener service");
-           ClientApp.showErrorDialog("Connection failed or error in listener service");
+           ClientApp.showErrorDialog(Alert.AlertType.ERROR,"Connection Error", "Server Connection Problem","Connection failed or error in listener service");
            event.getSource().getException().printStackTrace();
             Platform.exit();
             System.exit(0);
