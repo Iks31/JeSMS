@@ -14,6 +14,9 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+
 public class JeSMSView implements UI {
 
     // Sidebar
@@ -30,7 +33,7 @@ public class JeSMSView implements UI {
 
     // Current conversation
     private final Label currConversationLabel = new Label("Current Conversation");
-    private ListView<String> currMessagesList = new ListView<>(); //changed to string as we just want to show the sender and message
+    private ListView<ChatMessage> currMessagesList = new ListView<>(); //changed to string as we just want to show the sender and message
     private final TextArea messageTextArea = new TextArea();
     private final Button sendMessageButton = new Button("Send Message");
     private final HBox sendMessageContainer = new HBox(messageTextArea, sendMessageButton);
@@ -40,6 +43,9 @@ public class JeSMSView implements UI {
     // Conversations ordered by most recent message
     // Clicking on a list view item will display a conversation
 
+    // Formatter for datetime
+    private static final DateTimeFormatter DATE_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("MMM d, HH:mm").withZone(ZoneId.systemDefault());
     // Root
     private final HBox rootPane = new HBox(sidebar, conversationsContainer, currConversationContainer);
     private final Scene scene = new Scene(rootPane, DEFAULT_WIDTH, DEFAULT_HEIGHT);
@@ -64,11 +70,50 @@ public class JeSMSView implements UI {
         // Current conversation takes 2/3
         HBox.setHgrow(currConversationContainer, Priority.ALWAYS);
         currConversationContainer.setPrefWidth((DEFAULT_WIDTH * 2) / 3.0);
+
+        scene.getStylesheets().add("style.css");
+        setUpCellFactory();
     }
 
     @Override
     public Scene getScene (Stage stage) {
         return scene;
+    }
+
+    public void setUpCellFactory() {
+        currMessagesList.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(ChatMessage msg, boolean empty) {
+                super.updateItem(msg, empty);
+
+                if (empty || msg == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    // Sender + timestamp
+                    Label meta = new Label(msg.sender + " • " +
+                            DATE_TIME_FORMATTER.format(msg.getTimestampInstant()));
+                    meta.getStyleClass().add("message-meta");
+
+                    // Message content
+                    Label content = new Label(msg.content);
+                    content.setWrapText(true);
+                    content.setMaxWidth(300);
+                    content.getStyleClass().add("message-content");
+
+                    VBox bubble = new VBox(meta, content);
+                    bubble.getStyleClass().add("message-bubble");
+
+                    HBox wrapper = new HBox(bubble);
+                    wrapper.getStyleClass().add(msg.sender.equals(ClientApp.getClientNetworking().getUsername())
+                            ? "sent-message"
+                            : "received-message"
+                    );
+
+                    setGraphic(wrapper);
+                }
+            }
+        });
     }
 
     public Button getCreateConversationButton () {
@@ -80,7 +125,7 @@ public class JeSMSView implements UI {
     public Button getFilterToggleButton () { return filterToggleButton; }
     public Button getSettingsButton () { return settingsButton; }
     public ListView<String> getConversationsList () { return conversationsList; }
-    public ListView<String> getCurrMessagesList () { return currMessagesList; }
+    public ListView<ChatMessage> getCurrMessagesList () { return currMessagesList; }
     public TextArea getMessageTextArea () { return messageTextArea; }
 
 }

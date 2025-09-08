@@ -10,6 +10,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
 
 import java.lang.reflect.Array;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,13 +63,9 @@ public class JeSMSController {
 
     // Sets up the messages depending on what conversation is being viewed
     public void messageDataSetup() {
-        Conversation currConversation;
         int index = view.getConversationsList().getSelectionModel().getSelectedIndex();
-        ObservableList<String> messages = FXCollections.observableArrayList();
-        for(ChatMessage message: conversationsList.get(index).messages){
-            messages.add(message.sender + ": " + message.content);
-        }
-
+        ObservableList<ChatMessage> messages = FXCollections.observableArrayList();
+        messages.addAll(conversationsList.get(index).messages);
         view.getCurrMessagesList().setItems(messages);
     }
 
@@ -112,13 +109,17 @@ public class JeSMSController {
     //creates a new message and adds it to the observable list and then calls again to reformat messages for user
     public void sendMsg() {
         int index = view.getConversationsList().getSelectionModel().getSelectedIndex();
+        if (index < 0) return;
         Conversation currConversation = conversationsList.get(index);
         ChatMessage message = new ChatMessage();
         {
             message.sender = ClientApp.getClientNetworking().getUsername();
             message.content = view.getMessageTextArea().getText();
-            //TODO needs to be updated
-            message.timestamp = null;
+            // Creates MongoLong for current timestamp
+            ChatMessage.MongoLong mongoLong = new ChatMessage.MongoLong();
+            mongoLong.value = String.valueOf(Instant.now().toEpochMilli());
+            message.timestamp = mongoLong;
+
             message.readBy = new ArrayList<>();
             message.edited = false;
             message.isDeleted = false;
@@ -129,6 +130,7 @@ public class JeSMSController {
         conversationData.add(currConversation.users);
         conversationData.add(message);
         ClientApp.getClientNetworking().messageRequest(conversationData);
+        view.getMessageTextArea().clear();
         messageDataSetup();
     }
     public void createConversation() {

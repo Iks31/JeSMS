@@ -97,3 +97,44 @@
 .root {
 
 }
+
+/* ============================
+   Message bubble styles
+   ============================ */
+
+/* Common bubble */
+.message-bubble {
+    -fx-padding: 4 8;
+    -fx-background-radius: 12;
+    -fx-spacing: 2; /* space between meta and text */
+}
+
+/* Message text */
+.message-content {
+    -fx-padding: 6 10;
+    -fx-background-radius: 10;
+}
+
+/* Meta info (sender + timestamp) */
+.message-meta {
+    -fx-font-size: 10px;
+    -fx-text-fill: gray;
+}
+
+/* Alignment */
+.sent-message {
+    -fx-alignment: center-right;
+}
+
+.received-message {
+    -fx-alignment: center-left;
+}
+
+/* Bubble colors */
+.sent-message .message-bubble {
+    -fx-background-color: #d2eaff; /* light blue */
+}
+
+.received-message .message-bubble {
+    -fx-background-color: #e6e6e6; /* light gray */
+}
