@@ -7,9 +7,11 @@ import com.github.Iks31.messagingapp.common.Conversation;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.control.Alert;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.List;
 
 public class JeSMSController {
     private final JeSMSView view;
@@ -32,9 +34,19 @@ public class JeSMSController {
                 //  this.displayedMessages = new Message();
             } else if ("CONVERSATIONS_NOT_RECEIVED".equals(msg.getFlag())) {
                 //TODO what happens when the conversations have not been retrieved
-            }
-            if("REALTIME_CHAT".equals(msg.getFlag())){
-                Platform.runLater(() -> realTimeMessage((ArrayList<Object>)msg.getContent()));
+            } else if ("REALTIME_CHAT".equals(msg.getFlag())){
+                Platform.runLater(() -> realTimeMessage((ArrayList<Object>) msg.getContent()));
+            } else if ("CREATE_CONVERSATION_SUCCESS".equals(msg.getFlag())) {
+                Platform.runLater(() -> {
+                    // Code here for successful conversation creation
+                    // e.g. new conversations request to maintain consistency with server
+                });
+            } else if ("CREATE_CONVERSATION_FAIL".equals(msg.getFlag())) {
+                Platform.runLater(() -> {
+                   // Code for conversation failure
+                   // e.g. Alert that informs user that the conversation already exists or that a user entered
+                   // does not exist
+                });
             }
         });
         ClientApp.getClientNetworking().conversationsRequest();
@@ -107,15 +119,18 @@ public class JeSMSController {
         messageDataSetup();
     }
     public void createConversation() {
-        CreateConversationDialog dialog = new CreateConversationDialog();
+        CreateConversationDialog dialog = new CreateConversationDialog(conversationsList);
         dialog.showAndWait();
 
-        String name = dialog.getConversationName();
         ArrayList<String> users = dialog.getConversationUsers();
 
         if (users != null) {
             users.add(ClientApp.getClientNetworking().getUsername());
-            ClientApp.getClientNetworking().createConversationRequest(users, name);
+            Conversation conversation = new Conversation();
+            conversation.name = dialog.getConversationName();
+            conversation.users = users;
+            conversation.messages = new ArrayList<>();
+            ClientApp.getClientNetworking().createConversationRequest(conversation);
         }
     }
 }

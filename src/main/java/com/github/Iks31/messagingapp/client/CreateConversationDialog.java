@@ -1,5 +1,6 @@
 package com.github.Iks31.messagingapp.client;
 
+import com.github.Iks31.messagingapp.common.Conversation;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -15,9 +16,11 @@ import javafx.stage.Stage;
 import com.github.Iks31.messagingapp.client.ui_components.TextButton;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class CreateConversationDialog extends Stage {
+    private ObservableList<Conversation> currentConversations;
     private final ObservableList<String> chatMembers = FXCollections.observableArrayList();
     private final ListView<String> membersList = new ListView<>(chatMembers);
     private final TextField userField = new TextField();
@@ -25,10 +28,12 @@ public class CreateConversationDialog extends Stage {
     private final Label statusLabel = new Label();
     private final TextButton createButton = new TextButton("Create", "button-primary");
 
-    private String conversationName= null;
+    private String conversationName = "";
     private ArrayList<String> conversationUsers;
 
-    public CreateConversationDialog() {
+    public CreateConversationDialog(ObservableList<Conversation> currentConversations) {
+        this.currentConversations = currentConversations;
+
         initModality(Modality.APPLICATION_MODAL);
         setTitle("Create New Conversation");
 
@@ -58,18 +63,40 @@ public class CreateConversationDialog extends Stage {
     }
 
     private void validateAndCreate() {
+        // Prevents chat without any members
         if (chatMembers.isEmpty()) {
             statusLabel.setText("Add at least one user.");
             return;
         }
 
-        if (chatMembers.size() > 1 && chatNameField.getText().trim().isEmpty()) {
+        // Always include the current user
+        String currentUser = ClientApp.getClientNetworking().getUsername();
+        Set<String> users = new HashSet<>(chatMembers);
+        users.add(currentUser);
+
+        // Prevents self-chat
+        if (users.size() == 1) {
+            statusLabel.setText("You cannot create a conversation with only yourself.");
+            return;
+        }
+
+        // Require a chat name if group (more than 2 users including self)
+        if (users.size() > 2 && chatNameField.getText().trim().isEmpty()) {
             statusLabel.setText("Enter a chat name for group chats.");
             return;
         }
 
-        conversationName = chatMembers.size() > 1 ? chatNameField.getText().trim() : chatMembers.get(0);
-        conversationUsers = new ArrayList<>(chatMembers);
+        // Check against existing conversations (order-insensitive)
+        for (Conversation conversation : currentConversations) {
+            Set<String> existingUsers = new HashSet<>(conversation.users);
+            if (users.equals(existingUsers)) {
+                statusLabel.setText("You are already in a conversation with these members.");
+                return;
+            }
+        }
+
+        conversationName = chatMembers.size() > 2 ? chatNameField.getText().trim() : "";
+        conversationUsers = new ArrayList<>(users);
 
         close();
     }
@@ -77,6 +104,8 @@ public class CreateConversationDialog extends Stage {
         String user = userField.getText().trim();
         if (user.isEmpty()) {
             statusLabel.setText("Enter a username.");
+        } else if (user.equals(ClientApp.getClientNetworking().getUsername())) {
+            statusLabel.setText("You do not need to add yourself.");
         } else if (chatMembers.contains(user)) {
             statusLabel.setText("User already added.");
         } else {

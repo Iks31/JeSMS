@@ -1,6 +1,7 @@
 package com.github.Iks31.messagingapp.client;
 
 import com.github.Iks31.messagingapp.common.ChatMessage;
+import com.github.Iks31.messagingapp.common.Conversation;
 import com.github.Iks31.messagingapp.common.NetworkMessage;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -84,11 +85,8 @@ public class ClientNetworking {
         sendMessage(new NetworkMessage("SEND_CHAT", conversationData));
     }
 
-    public void createConversationRequest(ArrayList<String> users, String chatName) {
-        ArrayList messageContent = new ArrayList<>();
-        messageContent.add(chatName);
-        messageContent.add(users);
-        sendMessage(new NetworkMessage("CREATE_CONVERSATION", messageContent));
+    public void createConversationRequest(Conversation conversation) {
+        sendMessage(new NetworkMessage("CREATE_CONVERSATION", conversation));
     }
 
     public void close() {

@@ -127,12 +127,10 @@ public class Server implements Runnable {
                         serveRegistrationRequest((ArrayList<String>) message.getContent());
                     } else if (message.getFlag().equals("GET_CONVERSATIONS")) {
                         serveConversationsRequest();
-                    } else if (message.getFlag().equals("CREATE_CONVERSATION")) {
-                        serveCreateConversationRequest((ArrayList<Object>)message.getContent());
                     } else if (message.getFlag().equals("SEND_CHAT")) {
                         serveSendChatRequest((ArrayList<Object>) message.getContent());
                     } else if (message.getFlag().equals("CREATE_CONVERSATION")) {
-                        serveCreateConversationRequest((ArrayList<Object>) message.getContent());
+                        serveCreateConversationRequest((Conversation) message.getContent());
                     }
                 }
             }
@@ -190,9 +188,8 @@ public class Server implements Runnable {
             }
         }
 
-        public void serveCreateConversationRequest(ArrayList<Object> conversation) {
+        public void serveCreateConversationRequest(Conversation conversation) {
             System.out.println("[CREATE CONVERSATION] " + address + " requested the conversation");
-            Conversation conversation = (Conversation) conversation.get(0);
             if(realTime(conversation.users)){
                 realTimeConversationCreation(conversation);
             }
