@@ -144,6 +144,12 @@ public class MongoDatabase {
             // Creating the document
             // to be inserted
 
+            for(String user: users){
+                if(!userExists(user).isSuccess()){
+                    return new DBResult<>(false,"user does not exist");
+                }
+            }
+
             MongoCollection<Document> collection = Collection("conversations");
             Document document = new Document("name",conversationName)
                     .append("users", users)
