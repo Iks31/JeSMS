@@ -31,6 +31,7 @@ public class MongoDatabase {
         connect();
     }
 
+
     public void connect()
     {
 // Replace with your actual connection string

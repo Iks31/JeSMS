@@ -1,6 +1,7 @@
 package com.github.Iks31.messagingapp.server;
 
 import com.github.Iks31.messagingapp.common.ChatMessage;
+import com.github.Iks31.messagingapp.common.Conversation;
 import com.github.Iks31.messagingapp.common.NetworkMessage;
 import com.github.Iks31.messagingapp.server.db.DBResult;
 import com.github.Iks31.messagingapp.server.db.MongoDatabase;
@@ -11,6 +12,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -26,13 +28,12 @@ import static com.github.Iks31.messagingapp.server.db.MongoDatabase.*;
 
 public class Server implements Runnable {
 
-    private HashMap<String, ConnectionHandler> loggedInConnections = new HashMap<String, ConnectionHandler>();
+    private ConcurrentHashMap<String, ConnectionHandler> loggedInConnections = new ConcurrentHashMap<>();
     private ArrayList<ConnectionHandler> connections;
     private ServerSocket server;
     private boolean done;
     private ExecutorService pool;
     private int noOfUsers;
-    Dictionary<String,ConnectionHandler> connection;
     private MongoDatabase db;
 
 
@@ -126,6 +127,8 @@ public class Server implements Runnable {
                         serveRegistrationRequest((ArrayList<String>) message.getContent());
                     } else if (message.getFlag().equals("GET_CONVERSATIONS")) {
                         serveConversationsRequest();
+                    } else if (message.getFlag().equals("CREATE_CONVERSATION")) {
+                        serveCreateConversationRequest((ArrayList<Object>)message.getContent());
                     } else if (message.getFlag().equals("SEND_CHAT")) {
                         serveSendChatRequest((ArrayList<Object>) message.getContent());
                     }
@@ -186,14 +189,19 @@ public class Server implements Runnable {
         }
 
         public void serveCreateConversationRequest(ArrayList<Object> conversations) {
-            String conversationName = conversations.get(0).toString();
-            ArrayList<String> users = (ArrayList<String>)conversations.get(1);
-            DBResult<String> log = db.createConversation(conversationName,users);
-            if(log.isSuccess()){
-                sendMessage(new NetworkMessage("CREATE_CONVERSATION_SUCCESS", log.getResult()));
+            System.out.println("[CREATE CONVERSATIONS] " + address + " requested the conversation");
+            Conversation conversation = (Conversation) conversations.get(0);
+            if(realTime(conversation.users)){
+                realTimeConversationCreation(conversation);
             }
             else{
-                sendMessage(new NetworkMessage("CREATE_CONVERSATION_FAIL", null));
+                DBResult<String> log = db.createConversation(conversation.name,conversation.users);
+                if(log.isSuccess()){
+                    sendMessage(new NetworkMessage("CREATE_CONVERSATION_SUCCESS", log.getMessage()));
+                }
+                else{
+                    sendMessage(new NetworkMessage("CREATE_CONVERSATION_FAIL", log.getMessage()));
+                }
             }
         }
 
@@ -205,21 +213,41 @@ public class Server implements Runnable {
             ArrayList<String> users = (ArrayList<String>) chatContent.get(1);
             ChatMessage message = (ChatMessage)chatContent.get(2);
             String sender = message.sender;
+            if (realTime(users)) {
+                realtimeChat(message,sender,users);
+            } else {
+                regularChat(message.content,sender,users);
+            }
+        }
+
+        public boolean realTime(ArrayList<String> users){
             boolean realtime = false;
             // More efficient way of searching for active recipient here
             for(String u : users){
-                if(u.equals(sender)){
+                if(u.equals(username)){
                     continue;
                 }
                 if(loggedInConnections.containsKey(u)){
                     realtime = true;
                 }
             }
-            if (realtime) {
-                realtimeChat(message,sender,users);
-            } else {
-                regularChat(message.content,sender,users);
-            }
+            return realtime;
+        }
+
+        public void realTimeConversationCreation(Conversation conversation){
+            DBResult<String> log = db.createConversation(conversation.name,conversation.users);
+            if(log.isSuccess()){
+                for(String u : conversation.users){
+                    if(u.equals(username)){
+                        continue;
+                    }
+                    else if(loggedInConnections.containsKey(u)){
+                        loggedInConnections.get(u).sendMessage(new NetworkMessage("REALTIME_CONVERSATION",conversation));
+                    }
+                }
+            }else{
+                sendMessage(new NetworkMessage("REALTIME_CONVERSATION_FAIL", log.getMessage()));
+            };
         }
 
         public void realtimeChat(ChatMessage message, String sender, ArrayList<String> users) {
