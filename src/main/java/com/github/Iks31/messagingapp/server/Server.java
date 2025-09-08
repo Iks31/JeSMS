@@ -184,7 +184,7 @@ public class Server implements Runnable {
                 sendMessage(new NetworkMessage("CONVERSATIONS_RECEIVED", log.getResult()));
             }
             else{
-                sendMessage(new NetworkMessage("CONVERSATIONS_NOT_RECEIVED", null));
+                sendMessage(new NetworkMessage("CONVERSATIONS_NOT_RECEIVED", log.getMessage()));
             }
         }
 
@@ -251,20 +251,31 @@ public class Server implements Runnable {
 
         public void realtimeChat(ChatMessage message, String sender, ArrayList<String> users) {
             DBResult<String> log = db.newMessage(message.content,sender,users);
-            ArrayList<Object> networkMessage = new ArrayList<>();
-            networkMessage.add(message);
-            networkMessage.add(users);
-            for(String u : users){
-                if(u.equals(sender)){
-                    continue;
+            if(log.isSuccess()){
+                ArrayList<Object> networkMessage = new ArrayList<>();
+                networkMessage.add(message);
+                networkMessage.add(users);
+                for(String u : users){
+                    if(u.equals(sender)){
+                        continue;
+                    }
+                    else if(loggedInConnections.containsKey(u)){
+                        loggedInConnections.get(u).sendMessage(new NetworkMessage("REALTIME_CHAT", networkMessage));
+                    }
                 }
-                else if(loggedInConnections.containsKey(u)){
-                    loggedInConnections.get(u).sendMessage(new NetworkMessage("REALTIME_CHAT", networkMessage));
-                }
+                sendMessage(new NetworkMessage("REALTIME_CHAT_SUCCESS", log.getMessage()));
+            }else{
+                sendMessage(new NetworkMessage("REALTIME_CHAT_FAIL", log.getMessage()));
             }
         }
         public void regularChat(String content, String sender, ArrayList<String> users) {
-            db.newMessage(content,sender,users);
+            DBResult<String> log = db.newMessage(content,sender,users);
+            if(log.isSuccess()){
+                sendMessage(new NetworkMessage("REGULAR_CHAT_SUCCESS", log.getMessage()));
+            }else{
+                sendMessage(new NetworkMessage("REGULAR_CHAT_FAIL", log.getMessage()));
+            }
+
         }
 
         public void shutdown(){
