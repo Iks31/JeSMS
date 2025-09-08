@@ -31,7 +31,6 @@ public class MongoDatabase {
         connect();
     }
 
-
     public void connect()
     {
 // Replace with your actual connection string
@@ -81,7 +80,6 @@ public class MongoDatabase {
             while (mongoCursor.hasNext()) {
                 list.add(mongoCursor.next().toJson());
             }
-            System.out.println(list);
             return new DBResult<>(true, "successfully retrieved conversations",list);
         } catch (Exception e) {
             return new DBResult<>(false,e);
@@ -108,7 +106,6 @@ public class MongoDatabase {
                 return new DBResult<>(true, "successfully retrieved credentials",credentials);
             }
         } catch (Exception e) {
-            System.err.println("login unsuccessful");
             return new DBResult<>(false,e);
         }
     }
@@ -142,8 +139,7 @@ public class MongoDatabase {
             }
 
             if(conversationExists(users)){
-                System.out.println("conversation already exists");
-                return new DBResult<>(false,null,null);
+                return new DBResult<>(false,"conversation already exists");
             }
             // Creating the document
             // to be inserted
@@ -182,7 +178,7 @@ public class MongoDatabase {
         return true;
     }
 
-    public DBResult<String> addUser(ArrayList<String> users, String username) {
+    public DBResult<String> addUserToConversation(ArrayList<String> users, String username) {
         try{
             if (db == null) {
                 connect();
@@ -191,7 +187,6 @@ public class MongoDatabase {
             ArrayList<String> newGroup = (ArrayList<String>)users.clone();
             newGroup.add(username);
             if(conversationExists(newGroup)){
-                System.out.println("conversation already exists");
                 return new DBResult<>(false,"conversation already exists");
             }
             collection.updateOne(eq("users", users), Updates.addToSet("users", username));
@@ -201,7 +196,7 @@ public class MongoDatabase {
         }
     }
 
-    public DBResult<String> removeUser(ArrayList<String> users, String username) {
+    public DBResult<String> removeUserFromConversation(ArrayList<String> users, String username) {
         try{
             if (db == null) {
                 connect();
@@ -224,8 +219,7 @@ public class MongoDatabase {
         try{
             MongoCollection<Document> collection = Collection("users");
 
-            Document user = collection.find(eq("user", username)).first();
-            if(user ==null){
+            if(!userExists(username).isSuccess()){
                 Document newUser = new Document("user", username).append("password", password);
                 collection.insertOne(newUser);
                 return new DBResult<>(true, "successfully created user");
@@ -236,6 +230,18 @@ public class MongoDatabase {
         }
         catch (Exception e) {
             return new DBResult<>(false,e);
+        }
+    }
+
+    public DBResult<String> userExists(String username) {
+        MongoCollection<Document> collection = Collection("users");
+
+        Document user = collection.find(eq("user", username)).first();
+        if(user !=null){
+            return new DBResult<String>(true, "user does not exist yet");
+        }
+        else{
+            return new DBResult<String>(false, "user already exists");
         }
     }
 
