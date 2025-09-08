@@ -19,11 +19,10 @@ public class JeSMSController {
     public JeSMSController(JeSMSView view) {
         this.view = view;
         // Update view based on model data gathered from server here and fix events
-         attachEvents();
+        attachEvents();
     }
 
     private void attachEvents() {
-        // Add button events
         ClientApp.getClientNetworking().setMessageHandler(msg -> {
             if ("CONVERSATIONS_RECEIVED".equals(msg.getFlag())) {
                 ArrayList<String> conversationsjson = (ArrayList<String>)msg.getContent();
@@ -40,17 +39,12 @@ public class JeSMSController {
         });
         ClientApp.getClientNetworking().conversationsRequest();
         view.getCreateConversationButton().setOnAction(e -> createConversation());
-        //now event handlers have been added to to send the index of the conversation
-        view.getSendMessageButton().setOnAction(e -> {
-
-            sendMsg();});
-        view.getConversationsList().setOnMouseClicked(e -> {
-            messageDataSetup();
-        });
-
-        // Update messages based on refresh
+        // Now event handlers have been added to send the index of the conversation
+        view.getSendMessageButton().setOnAction(e -> sendMsg());
+        view.getConversationsList().setOnMouseClicked(e -> messageDataSetup());
     }
-// Sets up the messages depending on what conversation is being viewed
+
+    // Sets up the messages depending on what conversation is being viewed
     public void messageDataSetup() {
         Conversation currConversation;
         int index = view.getConversationsList().getSelectionModel().getSelectedIndex();
@@ -60,9 +54,6 @@ public class JeSMSController {
         }
 
         view.getCurrMessagesList().setItems(messages);
-        // Add relevant data to list views
-      //  view.getConversationsList().setItems(FXCollections.observableArrayList("James", "Ben", "Sammy"));
-      //  view.getCurrMessagesList().setItems(FXCollections.observableArrayList("Hello", "Hi!", "What's Up?"));
     }
 
     public void realTimeMessage(ArrayList<Object> content){
@@ -114,5 +105,16 @@ public class JeSMSController {
         ClientApp.getClientNetworking().messageRequest(conversationData);
         messageDataSetup();
     }
-    public void createConversation() {}
+    public void createConversation() {
+        CreateConversationDialog dialog = new CreateConversationDialog();
+        dialog.showAndWait();
+
+        String name = dialog.getConversationName();
+        ArrayList<String> users = dialog.getConversationUsers();
+
+        if (users != null) {
+            users.add(ClientApp.getClientNetworking().getUsername());
+            ClientApp.getClientNetworking().createConversationRequest(users, name);
+        }
+    }
 }

@@ -128,6 +128,8 @@ public class Server implements Runnable {
                         serveConversationsRequest();
                     } else if (message.getFlag().equals("SEND_CHAT")) {
                         serveSendChatRequest((ArrayList<Object>) message.getContent());
+                    } else if (message.getFlag().equals("CREATE_CONVERSATION")) {
+                        serveCreateConversationRequest((ArrayList<Object>) message.getContent());
                     }
                 }
             }
@@ -185,10 +187,10 @@ public class Server implements Runnable {
             }
         }
 
-        public void serveCreateConversationRequest(ArrayList<Object> conversations) {
-            String conversationName = conversations.get(0).toString();
-            ArrayList<String> users = (ArrayList<String>)conversations.get(1);
-            DBResult<String> log = db.createConversation(conversationName,users);
+        public void serveCreateConversationRequest(ArrayList<Object> conversation) {
+            String conversationName = conversation.get(0).toString();
+            ArrayList<String> users = (ArrayList<String>) conversation.get(1);
+            DBResult<String> log = db.createConversation(conversationName, users);
             if(log.isSuccess()){
                 sendMessage(new NetworkMessage("CREATE_CONVERSATION_SUCCESS", log.getResult()));
             }
