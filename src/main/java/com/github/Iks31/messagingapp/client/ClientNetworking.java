@@ -84,6 +84,13 @@ public class ClientNetworking {
         sendMessage(new NetworkMessage("SEND_CHAT", conversationData));
     }
 
+    public void createConversationRequest(ArrayList<String> users, String chatName) {
+        ArrayList messageContent = new ArrayList<>();
+        messageContent.add(chatName);
+        messageContent.add(users);
+        sendMessage(new NetworkMessage("CREATE_CONVERSATION", messageContent));
+    }
+
     public void close() {
         try {
             if (oos != null) {
