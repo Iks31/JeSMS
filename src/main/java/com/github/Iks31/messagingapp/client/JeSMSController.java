@@ -34,8 +34,10 @@ public class JeSMSController {
                 //  this.displayedMessages = new Message();
             } else if ("CONVERSATIONS_NOT_RECEIVED".equals(msg.getFlag())) {
                 //TODO what happens when the conversations have not been retrieved
-            } else if ("REALTIME_CHAT".equals(msg.getFlag())){
+            } else if ("REALTIME_CHAT".equals(msg.getFlag())) {
                 Platform.runLater(() -> realTimeMessage((ArrayList<Object>) msg.getContent()));
+            } else if ("REALTIME_CONVERSATION".equals(msg.getFlag())) {
+                Platform.runLater(() -> realTimeConversation((Conversation) msg.getContent()));
             } else if ("CREATE_CONVERSATION_SUCCESS".equals(msg.getFlag())) {
                 Platform.runLater(() -> {
                     // Code here for successful conversation creation
@@ -47,6 +49,7 @@ public class JeSMSController {
                    // Code for conversation failure
                    // e.g. Alert that informs user that the conversation already exists or that a user entered
                    // does not exist
+                    ClientApp.showErrorDialog(Alert.AlertType.WARNING, "Conversation Error", "Failed to Create Conversation", msg.getContent().toString());
                 });
             }
         });
@@ -78,6 +81,10 @@ public class JeSMSController {
             }
         }
         messageDataSetup();
+    }
+
+    public void realTimeConversation(Conversation conversation){
+        conversationsList.add(conversation);
     }
 
     public void formatConversations(ArrayList<String> jsons) {
