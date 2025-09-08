@@ -233,9 +233,9 @@ public class Server implements Runnable {
             return realtime;
         }
 
-        public void realTimeConversationCreation(Conversation conversation){
+        public void realTimeConversationCreation(Conversation conversation) {
             DBResult<String> log = db.createConversation(conversation.name,conversation.users);
-            if(log.isSuccess()){
+            if (log.isSuccess()) {
                 for(String u : conversation.users){
                     if(u.equals(username)){
                         continue;
@@ -244,7 +244,7 @@ public class Server implements Runnable {
                         loggedInConnections.get(u).sendMessage(new NetworkMessage("REALTIME_CONVERSATION",conversation));
                     }
                 }
-            }else{
+            } else {
                 sendMessage(new NetworkMessage("REALTIME_CONVERSATION_FAIL", log.getMessage()));
             };
         }
@@ -266,8 +266,6 @@ public class Server implements Runnable {
         public void regularChat(String content, String sender, ArrayList<String> users) {
             db.newMessage(content,sender,users);
         }
-
-
 
         public void shutdown(){
             try {

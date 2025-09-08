@@ -95,7 +95,7 @@ public class CreateConversationDialog extends Stage {
             }
         }
 
-        conversationName = chatMembers.size() > 2 ? chatNameField.getText().trim() : "";
+        conversationName = chatMembers.size() > 1 ? chatNameField.getText().trim() : "";
         conversationUsers = new ArrayList<>(users);
 
         close();

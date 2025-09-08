@@ -40,6 +40,7 @@ public class JeSMSController {
                 Platform.runLater(() -> {
                     // Code here for successful conversation creation
                     // e.g. new conversations request to maintain consistency with server
+                    ClientApp.getClientNetworking().conversationsRequest();
                 });
             } else if ("CREATE_CONVERSATION_FAIL".equals(msg.getFlag())) {
                 Platform.runLater(() -> {
@@ -81,18 +82,23 @@ public class JeSMSController {
 
     public void formatConversations(ArrayList<String> jsons) {
         ObjectMapper mapper = new ObjectMapper();
+        conversationsList.clear();
         Conversation currConversation;
         ObservableList<String> conversationName = FXCollections.observableArrayList();
         for (String json : jsons) {
             try{
                 currConversation = mapper.readValue(json, Conversation.class);
                 conversationsList.add(currConversation);
-                conversationName.add(currConversation.name);
+                if (currConversation.name.isEmpty()) {
+                    // Temporary to show private DM - will be username after
+                    conversationName.add("Private DM");
+                } else {
+                    conversationName.add(currConversation.name);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        System.out.println(conversationsList.toString());
         view.getConversationsList().setItems(conversationName);
     }
     //new method to send a message after button has been clicked
@@ -125,7 +131,6 @@ public class JeSMSController {
         ArrayList<String> users = dialog.getConversationUsers();
 
         if (users != null) {
-            users.add(ClientApp.getClientNetworking().getUsername());
             Conversation conversation = new Conversation();
             conversation.name = dialog.getConversationName();
             conversation.users = users;
