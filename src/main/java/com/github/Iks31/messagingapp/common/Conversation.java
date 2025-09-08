@@ -17,5 +17,4 @@ public class Conversation implements Serializable {
     @JsonProperty("users")
     public ArrayList<String> users;
 
-    // Example template of what Json mapping class may look like
 }
