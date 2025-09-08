@@ -92,6 +92,7 @@ public class JeSMSController {
         {
             message.sender = ClientApp.getClientNetworking().getUsername();
             message.content = view.getMessageTextArea().getText();
+            //TODO needs to be updated
             message.timestamp = null;
             message.readBy = new ArrayList<>();
             message.edited = false;
