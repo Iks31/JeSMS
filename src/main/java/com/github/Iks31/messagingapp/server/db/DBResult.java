@@ -1,8 +1,9 @@
 package com.github.Iks31.messagingapp.server.db;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class DBResult<T>{
+public class DBResult<T> implements Serializable {
     private boolean success;
     private String message;
     private ArrayList<T> result = null;
