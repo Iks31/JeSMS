@@ -26,6 +26,7 @@ import static com.github.Iks31.messagingapp.server.db.MongoDatabase.*;
 
 public class Server implements Runnable {
 
+    private HashMap<String, ConnectionHandler> loggedInConnections = new HashMap<String, ConnectionHandler>();
     private ArrayList<ConnectionHandler> connections;
     private ServerSocket server;
     private boolean done;
@@ -104,6 +105,7 @@ public class Server implements Runnable {
             this.address = address;
             this.ois = ois;
             this.oos = oos;
+            username = address.toString();
         }
 
         public InetAddress getAddress() {return address;}
@@ -135,12 +137,15 @@ public class Server implements Runnable {
         }
 
         public void sendMessage(NetworkMessage message){
-            try {
-                oos.writeObject(message);
-                oos.flush();
-            } catch (IOException e) {
-                shutdown();
+            synchronized (this.oos){
+                try {
+                    oos.writeObject(message);
+                    oos.flush();
+                } catch (IOException e) {
+                    shutdown();
+                }
             }
+
         }
 
         public void serveLoginRequest(ArrayList<String> credentials) {
@@ -148,6 +153,7 @@ public class Server implements Runnable {
             DBResult<String> log = db.login(credentials.getFirst());
             if (log.isSuccess() && log.getResult().getLast().equals(credentials.getLast())) {
                 username = credentials.getFirst();
+                loggedInConnections.put(username, this);
                 System.out.println("[LOGIN SUCCESS] " + address + " successfully logged in as " + username);
                 sendMessage(new NetworkMessage("LOGIN_SUCCESS", null));
             } else {
@@ -158,7 +164,6 @@ public class Server implements Runnable {
 
         public void serveRegistrationRequest(ArrayList<String> credentials) {
             System.out.println("[REGISTER ATTEMPT] " + address + " attempted to register");
-            boolean success = true;// Success here should be based on method call to database
             DBResult<String> result = db.newUser(credentials.getFirst(), credentials.getLast());
             if (result.isSuccess()) {
                 System.out.println("[REGISTER SUCCESS] " + address + " successfully registered an account");
@@ -180,6 +185,18 @@ public class Server implements Runnable {
             }
         }
 
+        public void serveCreateConversationRequest(ArrayList<Object> conversations) {
+            String conversationName = conversations.get(0).toString();
+            ArrayList<String> users = (ArrayList<String>)conversations.get(1);
+            DBResult<String> log = db.createConversation(conversationName,users);
+            if(log.isSuccess()){
+                sendMessage(new NetworkMessage("CREATE_CONVERSATION_SUCCESS", log.getResult()));
+            }
+            else{
+                sendMessage(new NetworkMessage("CREATE_CONVERSATION_FAIL", null));
+            }
+        }
+
         public void serveSendChatRequest(ArrayList<Object> chatContent) {
             System.out.println("[SEND CHAT] " + address + " sent a chat");
             // Simulating active user
@@ -190,10 +207,12 @@ public class Server implements Runnable {
             String sender = message.sender;
             boolean realtime = false;
             // More efficient way of searching for active recipient here
-            for (ConnectionHandler ch: connections) {
-                if (users.contains(ch.getUsername()) && !ch.getUsername().equals(sender)) {
+            for(String u : users){
+                if(u.equals(sender)){
+                    continue;
+                }
+                if(loggedInConnections.containsKey(u)){
                     realtime = true;
-                    break;
                 }
             }
             if (realtime) {
@@ -204,13 +223,16 @@ public class Server implements Runnable {
         }
 
         public void realtimeChat(ChatMessage message, String sender, ArrayList<String> users) {
-            db.newMessage(message.content,sender,users);
+            DBResult<String> log = db.newMessage(message.content,sender,users);
             ArrayList<Object> networkMessage = new ArrayList<>();
             networkMessage.add(message);
             networkMessage.add(users);
-            for(ConnectionHandler ch: connections){
-                if(!ch.getUsername().equals(sender)){
-                    ch.sendMessage(new NetworkMessage("REALTIME_CHAT", networkMessage));
+            for(String u : users){
+                if(u.equals(sender)){
+                    continue;
+                }
+                else if(loggedInConnections.containsKey(u)){
+                    loggedInConnections.get(u).sendMessage(new NetworkMessage("REALTIME_CHAT", networkMessage));
                 }
             }
         }
@@ -218,14 +240,21 @@ public class Server implements Runnable {
             db.newMessage(content,sender,users);
         }
 
+
+
         public void shutdown(){
             try {
                 if (ois != null) {ois.close();};
                 if (oos != null) {oos.close();};
                 if (!client.isClosed()) {
+                    connections.remove(this);
                     client.close();
                 }
             } catch(IOException ignored) {}
+        }
+
+        public void logOut(){
+            loggedInConnections.remove(username);
         }
 
     }
