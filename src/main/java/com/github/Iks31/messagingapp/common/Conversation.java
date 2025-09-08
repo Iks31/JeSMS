@@ -1,10 +1,11 @@
 package com.github.Iks31.messagingapp.common;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Conversation {
+public class Conversation implements Serializable {
 //    @JsonProperty("conversationName")
 //    public String conversationName;
     @JsonProperty("_id")

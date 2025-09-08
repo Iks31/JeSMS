@@ -101,6 +101,7 @@ public class JeSMSController {
         {
             message.sender = ClientApp.getClientNetworking().getUsername();
             message.content = view.getMessageTextArea().getText();
+            //TODO needs to be updated
             message.timestamp = null;
             message.readBy = new ArrayList<>();
             message.edited = false;
@@ -114,5 +115,7 @@ public class JeSMSController {
         ClientApp.getClientNetworking().messageRequest(conversationData);
         messageDataSetup();
     }
-    public void createConversation() {}
+    public void createConversation() {
+
+    }
 }
