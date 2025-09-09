@@ -31,13 +31,13 @@ public class JeSMSView implements UI {
 
     // List of active conversations
     private final Label activeConversationsLabel = new Label("Active Conversations");
-    private final ListView<String> conversationsList = new ListView<>();
+    private final ListView<Conversation> conversationsList = new ListView<>();
     private final TextField activeConversationsFilter = new TextField();
     private final VBox conversationsContainer = new VBox(activeConversationsLabel, conversationsList, activeConversationsFilter);
 
     // Current conversation
     private final Label currConversationLabel = new Label("Current Conversation");
-    private ListView<ChatMessage> currMessagesList = new ListView<>(); //changed to string as we just want to show the sender and message
+    private ListView<ChatMessage> currMessagesList = new ListView<>();
     private final TextArea messageTextArea = new TextArea();
     private final Button sendMessageButton = new IconButton("/images/send.png");
     private final HBox sendMessageContainer = new HBox(messageTextArea, sendMessageButton);
@@ -85,7 +85,8 @@ public class JeSMSView implements UI {
         conversationsContainer.getStyleClass().add("conversations-container");
         currConversationContainer.getStyleClass().add("curr-conversation-container");
 
-        setUpCellFactory();
+        setUpMessageCellFactory();
+        setUpConversationCellFactory();
     }
 
     @Override
@@ -93,7 +94,7 @@ public class JeSMSView implements UI {
         return scene;
     }
 
-    public void setUpCellFactory() {
+    public void setUpMessageCellFactory() {
         currMessagesList.setCellFactory(lv -> new ListCell<>() {
             @Override
             protected void updateItem(ChatMessage msg, boolean empty) {
@@ -129,6 +130,41 @@ public class JeSMSView implements UI {
         });
     }
 
+    public void setUpConversationCellFactory() {
+        conversationsList.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(Conversation conversation, boolean empty) {
+                super.updateItem(conversation, empty);
+                if (empty || conversation == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+
+                    Label conversationNameLabel = new Label();
+                    if (conversation.name.isEmpty()) {
+                        if (conversation.users.getFirst().equals(ClientApp.getClientNetworking().getUsername())) {
+                            conversationNameLabel.setText(conversation.users.getLast());
+                        } else {
+                            conversationNameLabel.setText(conversation.users.getFirst());
+                        }
+                    } else {
+                        conversationNameLabel.setText(conversation.name);
+                    }
+                    Label recentChatContent = new Label();
+                    Label recentChatTime = new Label();
+                    if (!conversation.messages.isEmpty()) {
+                        ChatMessage recentMessage = conversation.messages.getLast();
+                        recentChatContent.setText(recentMessage.content);
+                        recentChatTime.setText(DATE_TIME_FORMATTER.format(recentMessage.getTimestampInstant()));
+                    }
+                    VBox conversationContainer = new VBox(conversationNameLabel, recentChatContent, recentChatTime);
+                    HBox wrapper = new HBox(conversationContainer);
+                    setGraphic(wrapper);
+                }
+            }
+        });
+    }
+
     public Button getCreateConversationButton () {
         return createConversationButton;
     }
@@ -138,7 +174,7 @@ public class JeSMSView implements UI {
     public Button getFilterToggleButton () { return filterToggleButton; }
     public BooleanProperty isFilteringUsersProperty() { return isFilteringUsers; }
     public Button getSettingsButton () { return settingsButton; }
-    public ListView<String> getConversationsList () { return conversationsList; }
+    public ListView<Conversation> getConversationsList () { return conversationsList; }
     public ListView<ChatMessage> getCurrMessagesList () { return currMessagesList; }
     public Label getCurrConversationLabel () { return currConversationLabel; }
     public TextArea getMessageTextArea () { return messageTextArea; }

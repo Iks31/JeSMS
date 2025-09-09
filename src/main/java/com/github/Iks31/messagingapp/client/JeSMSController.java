@@ -103,22 +103,15 @@ public class JeSMSController {
         ObjectMapper mapper = new ObjectMapper();
         conversationsList.clear();
         Conversation currConversation;
-        ObservableList<String> conversationName = FXCollections.observableArrayList();
         for (String json : jsons) {
             try{
                 currConversation = mapper.readValue(json, Conversation.class);
                 conversationsList.add(currConversation);
-                if (currConversation.name.isEmpty()) {
-                    // Temporary to show private DM - will be username after
-                    conversationName.add("Private DM");
-                } else {
-                    conversationName.add(currConversation.name);
-                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        view.getConversationsList().setItems(conversationName);
+        view.getConversationsList().setItems(conversationsList);
     }
     //new method to send a message after button has been clicked
     //creates a new message and adds it to the observable list and then calls again to reformat messages for user

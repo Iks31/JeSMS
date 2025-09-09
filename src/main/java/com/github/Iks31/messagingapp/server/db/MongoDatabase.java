@@ -28,7 +28,7 @@ import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
 public class MongoDatabase {
-    static String uri = "mongodb+srv://ikerdz3101:ChristianFlopped4Real@jesmscluster0.9ownp4i.mongodb.net/?retryWrites=true&w=majority&appName=JeSMScluster0";
+    static String uri = "mongodb+srv://ikerdz3101:<dbpassword>@jesmscluster0.9ownp4i.mongodb.net/?retryWrites=true&w=majority&appName=JeSMScluster0";
     static com.mongodb.client.MongoDatabase db;
     private static MongoClient mongoClient;
 
@@ -36,25 +36,15 @@ public class MongoDatabase {
         connect();
     }
 
-    public void connect()
-    {
-// Replace with your actual connection string
-
+    public void connect() {
         try {
             mongoClient = MongoClients.create(uri);
             System.out.println("✅ Connected to MongoDB!");
-
-//            // List all databases
-//            for (String dbName : mongoClient.listDatabaseNames()) {
-//                System.out.println("📁 Database: " + dbName);
-//            }
-//
-//            // Optionally connect to a specific database
-             db = mongoClient.getDatabase("JeSMS");
-//            System.out.println("🔍 Using database: " + db.getName());
+            db = mongoClient.getDatabase("JeSMS");
         } catch (Exception e) {
             System.err.println("❌ Connection failed");}
     }
+
     public MongoCollection<Document> Collection(
             String collectionName) {
 
