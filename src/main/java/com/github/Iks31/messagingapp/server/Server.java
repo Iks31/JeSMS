@@ -117,6 +117,8 @@ public class Server implements Runnable {
                         case "GET_CONVERSATIONS" -> serveConversationsRequest();
                         case "SEND_CHAT" -> serveSendChatRequest((ArrayList<Object>) message.getContent());
                         case "CREATE_CONVERSATION" -> serveCreateConversationRequest((Conversation) message.getContent());
+                        case "EDIT_CHAT" -> serveEditMessageRequest((ArrayList<Object>) message.getContent());
+                        case "DELETE_CHAT" -> serveDeleteMessageRequest((ArrayList<Object>) message.getContent());
                     }
                 }
             }
@@ -141,6 +143,10 @@ public class Server implements Runnable {
             System.out.println("[LOGIN ATTEMPT] " + address + " attempted to login");
             DBResult<String> log = db.login(credentials.getFirst());
             if (log.isSuccess() && log.getResult().getLast().equals(credentials.getLast())) {
+                if(loggedInConnections.get(credentials.getFirst()) != null){
+                    sendMessage(new NetworkMessage("LOGIN_FAIL", "You are already logged in!"));
+                    return;
+                }
                 username = credentials.getFirst();
                 loggedInConnections.put(username, this);
                 System.out.println("[LOGIN SUCCESS] " + address + " successfully logged in as " + username);
@@ -205,6 +211,20 @@ public class Server implements Runnable {
             }
         }
 
+        public void serveEditMessageRequest(ArrayList<Object> chatContent) {
+            System.out.println("[EDIT MESSAGE] " + address + " sent a chat");
+            String groupName = chatContent.get(0).toString();
+            ArrayList<String> users = (ArrayList<String>) chatContent.get(1);
+            ChatMessage message = (ChatMessage)chatContent.get(2);
+            String sender = message.sender;
+            if (realTime(users)) {
+                //TODO
+            }
+
+        }
+
+        public void serveDeleteMessageRequest(ArrayList<Object> chatContent) {}
+
         public boolean realTime(ArrayList<String> users){
             boolean realtime = false;
             // More efficient way of searching for active recipient here
@@ -235,6 +255,12 @@ public class Server implements Runnable {
                 sendMessage(new NetworkMessage("REALTIME_CONVERSATION_FAIL", log.getMessage()));
             }
         }
+
+        //TODO yet to implement
+        public void realTimeEditChat() {}
+        public void regularEditChat(){}
+        public void realTimeDeleteChat(){}
+        public void regularDeleteChat(){}
 
         public void realtimeChat(ChatMessage message, String sender, ArrayList<String> users) {
             DBResult<String> log = db.newMessage(message.content,sender,users);
