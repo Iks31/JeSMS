@@ -36,25 +36,15 @@ public class MongoDatabase {
         connect();
     }
 
-    public void connect()
-    {
-// Replace with your actual connection string
-
+    public void connect() {
         try {
             mongoClient = MongoClients.create(uri);
             System.out.println("✅ Connected to MongoDB!");
-
-//            // List all databases
-//            for (String dbName : mongoClient.listDatabaseNames()) {
-//                System.out.println("📁 Database: " + dbName);
-//            }
-//
-//            // Optionally connect to a specific database
-             db = mongoClient.getDatabase("JeSMS");
-//            System.out.println("🔍 Using database: " + db.getName());
+            db = mongoClient.getDatabase("JeSMS");
         } catch (Exception e) {
             System.err.println("❌ Connection failed");}
     }
+
     public MongoCollection<Document> Collection(
             String collectionName) {
 
