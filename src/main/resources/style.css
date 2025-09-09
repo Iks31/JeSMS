@@ -48,8 +48,6 @@
    Button styles
    ============================ */
 
-
-
 .button-primary {
     -fx-background-color: #26c485;
     -fx-text-fill: white;
@@ -82,59 +80,185 @@
 }
 
 .back-button {
-    -fx-background-color: transparent;   /* no button background */
-    -fx-cursor: hand;                    /* pointer cursor */
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
 }
 
 .back-button:hover {
-    -fx-opacity: 0.6;   /* makes it 60% opaque on hover */
+    -fx-opacity: 0.6;
 }
 
 /* ============================
-   Root component styles
+   Root & Background
    ============================ */
 
 .root {
-
+    -fx-background-color: #333333;
+    -fx-font-family: "Segoe UI", "Sans-Serif";
+    -fx-font-size: 13px;
 }
 
 /* ============================
-   Message bubble styles
+   Conversation List
    ============================ */
 
-/* Common bubble */
-.message-bubble {
-    -fx-padding: 4 8;
-    -fx-background-radius: 12;
-    -fx-spacing: 2; /* space between meta and text */
+.list-view {
+    -fx-background-color: #333333; /* Jet */
+    -fx-control-inner-background: #333333;
+    -fx-padding: 4;
+    -fx-background-insets: 0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
 }
 
-/* Message text */
-.message-content {
+.list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #a3e7fc;
+    -fx-padding: 8 10;
+}
+
+.list-cell:hover {
+    -fx-background-color: #474350;
+    -fx-text-fill: #a3e7fc;
+    -fx-cursor: hand;
+}
+
+.list-cell:filled:selected, .list-cell:filled:selected:hover {
+    -fx-background-color: #26c485;
+    -fx-text-fill: white;
+}
+
+/* ============================
+   Message bubbles
+   ============================ */
+
+/* Base bubble */
+.message-bubble {
     -fx-padding: 6 10;
-    -fx-background-radius: 10;
+    -fx-background-radius: 16;
+    -fx-spacing: 3;
+    -fx-font-size: 13px;
+}
+
+/* Actual message text */
+.message-content {
+    -fx-padding: 8 12;
+    -fx-background-radius: 14;
+    -fx-wrap-text: true;
+    -fx-font-size: 13px;
 }
 
 /* Meta info (sender + timestamp) */
 .message-meta {
     -fx-font-size: 10px;
-    -fx-text-fill: gray;
+    -fx-text-fill: #666666;
 }
 
-/* Alignment */
+/* Sent message (your own) */
 .sent-message {
     -fx-alignment: center-right;
 }
 
+.sent-message .message-bubble {
+    -fx-background-color: #26c485;
+}
+
+.sent-message .message-content {
+    -fx-text-fill: white;
+}
+
+.sent-message .message-meta {
+    -fx-text-fill: rgba(255,255,255,0.8);
+}
+
+/* Received message (others) */
 .received-message {
     -fx-alignment: center-left;
 }
 
-/* Bubble colors */
-.sent-message .message-bubble {
-    -fx-background-color: #d2eaff; /* light blue */
-}
-
 .received-message .message-bubble {
     -fx-background-color: #e6e6e6; /* light gray */
+}
+
+.received-message .message-content {
+    -fx-text-fill: #333333; /* dark text */
+}
+
+.received-message .message-meta {
+    -fx-text-fill: #474350; /* davy’s gray */
+}
+
+/* ============================
+   Text Area (Message Input)
+   ============================ */
+
+.text-area {
+    -fx-background-color: #474350;
+    -fx-control-inner-background: #474350;
+    -fx-text-fill: #a3e7fc;
+    -fx-highlight-fill: #26c485;
+    -fx-highlight-text-fill: white;
+    -fx-border-color: #333333;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 6;
+}
+
+/* Remove JavaFX default blue focus ring */
+.text-area:focused {
+    -fx-border-color: #26c485;
+    -fx-faint-focus-color: transparent;
+    -fx-focus-color: transparent;
+}
+
+/* Optional: scrollbar inside text area */
+.text-area .scroll-pane {
+    -fx-background-color: transparent;
+}
+
+/* Flatten nested layers inside TextArea */
+.text-area .scroll-pane,
+.text-area .scroll-pane .viewport,
+.text-area .scroll-pane .content {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+/* ============================
+   Scrollbars
+   ============================ */
+
+.scroll-bar:vertical, .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #474350;
+    -fx-background-radius: 6;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #32908f;
+}
+
+.scroll-bar .track {
+    -fx-background-color: #333333;
+    -fx-background-radius: 6;
+}
+
+
+/* ============================
+   Labels
+   ============================ */
+
+.label {
+    -fx-text-fill: #a3e7fc;
+}
+
+/* Headers or titles */
+.label.header {
+    -fx-font-size: 16px;
+    -fx-text-fill: #26c485;
+    -fx-font-weight: bold;
 }

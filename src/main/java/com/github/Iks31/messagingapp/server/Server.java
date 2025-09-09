@@ -13,6 +13,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -20,16 +21,10 @@ import org.bson.Document;
 
 import static com.github.Iks31.messagingapp.server.db.MongoDatabase.*;
 
-
-// Current server code analysis:
-// - Server will accept connections initially regardless of login - inactivity for too long can disconnect a user to prevent too many connections while still not in
-// - Ability to broadcast will be useful just not used very often
-// - Main challenge will be realtime messaging - inter thread communication needed to inform another connected user of a new message and update
-
 public class Server implements Runnable {
 
     private ConcurrentHashMap<String, ConnectionHandler> loggedInConnections = new ConcurrentHashMap<>();
-    private ArrayList<ConnectionHandler> connections;
+    private final List<ConnectionHandler> connections = new CopyOnWriteArrayList<>();
     private ServerSocket server;
     private boolean done;
     private ExecutorService pool;
@@ -38,7 +33,6 @@ public class Server implements Runnable {
 
 
     public Server() {
-        connections = new ArrayList<>();
         done = false;
         db = new MongoDatabase();
     }
@@ -283,6 +277,7 @@ public class Server implements Runnable {
                 if (ois != null) {ois.close();};
                 if (oos != null) {oos.close();};
                 if (!client.isClosed()) {
+                    loggedInConnections.remove(username);
                     connections.remove(this);
                     client.close();
                 }
