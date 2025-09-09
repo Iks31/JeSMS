@@ -66,25 +66,26 @@
 
 .button-secondary {
     -fx-background-color: #474350;
-    -fx-text-fill: #a3e7fc;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
     -fx-background-radius: 8;
     -fx-padding: 6 12;
 }
 
 .button-secondary:hover {
-    -fx-background-color: #333333;
+    -fx-background-color: #32908f;
 }
 
 .button-secondary:pressed {
     -fx-background-color: #B1C1C0;
 }
 
-.back-button {
+.icon-button {
     -fx-background-color: transparent;
     -fx-cursor: hand;
 }
 
-.back-button:hover {
+.icon-button:hover {
     -fx-opacity: 0.6;
 }
 
@@ -96,6 +97,44 @@
     -fx-background-color: #333333;
     -fx-font-family: "Segoe UI", "Sans-Serif";
     -fx-font-size: 13px;
+}
+/* ============================
+   Section Headers
+   ============================ */
+
+.section-header {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #a3e7fc;
+    -fx-padding: 8 10 6 10;
+    -fx-background-color: #2b2b2b;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: #474350;
+}
+
+/* ============================
+   Section Containers
+   ============================ */
+
+/* Sidebar */
+.sidebar {
+    -fx-background-color: #333333;
+    -fx-border-width: 0 1 0 0;
+    -fx-border-color: #474350;
+}
+
+/* Conversations container */
+.conversations-container {
+    -fx-background-color: #2b2b2b;
+    -fx-border-width: 0 1 0 1;
+    -fx-border-color: #474350;
+}
+
+/* Current conversation container */
+.curr-conversation-container {
+    -fx-background-color: #1e1e1e;
+    -fx-border-width: 0 0 0 1;
+    -fx-border-color: #474350;
 }
 
 /* ============================

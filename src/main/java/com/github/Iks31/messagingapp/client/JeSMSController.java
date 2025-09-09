@@ -56,17 +56,32 @@ public class JeSMSController {
         });
         ClientApp.getClientNetworking().conversationsRequest();
         view.getCreateConversationButton().setOnAction(e -> createConversation());
-        // Now event handlers have been added to send the index of the conversation
         view.getSendMessageButton().setOnAction(e -> sendMsg());
         view.getConversationsList().setOnMouseClicked(e -> messageDataSetup());
+        view.getFilterToggleButton().setOnAction(e -> toggleFilter());
     }
 
     // Sets up the messages depending on what conversation is being viewed
     public void messageDataSetup() {
         int index = view.getConversationsList().getSelectionModel().getSelectedIndex();
+        if (index >= conversationsList.size()) {
+            return;
+        }
+        String currName = conversationsList.get(index).name;
+        List<String> currUsers = conversationsList.get(index).users;
+        if (currName.isEmpty()) {
+            if (currUsers.getFirst().equals(ClientApp.getClientNetworking().getUsername())) {
+                view.getCurrConversationLabel().setText(currUsers.getLast());
+            } else {
+                view.getCurrConversationLabel().setText(currUsers.getFirst());
+            }
+        } else {
+            view.getCurrConversationLabel().setText(currName);
+        }
         ObservableList<ChatMessage> messages = FXCollections.observableArrayList();
         messages.addAll(conversationsList.get(index).messages);
         view.getCurrMessagesList().setItems(messages);
+        view.getCurrMessagesList().scrollTo(view.getCurrMessagesList().getItems().size() - 1);
     }
 
     public void realTimeMessage(ArrayList<Object> content){
@@ -110,11 +125,15 @@ public class JeSMSController {
     public void sendMsg() {
         int index = view.getConversationsList().getSelectionModel().getSelectedIndex();
         if (index < 0) return;
+        String enteredText = view.getMessageTextArea().getText();
+        if (enteredText.isEmpty()) {
+            return;
+        }
         Conversation currConversation = conversationsList.get(index);
         ChatMessage message = new ChatMessage();
         {
             message.sender = ClientApp.getClientNetworking().getUsername();
-            message.content = view.getMessageTextArea().getText();
+            message.content = enteredText;
             // Creates MongoLong for current timestamp
             ChatMessage.MongoLong mongoLong = new ChatMessage.MongoLong();
             mongoLong.value = String.valueOf(Instant.now().toEpochMilli());
@@ -146,5 +165,8 @@ public class JeSMSController {
             conversation.messages = new ArrayList<>();
             ClientApp.getClientNetworking().createConversationRequest(conversation);
         }
+    }
+    public void toggleFilter() {
+        view.isFilteringUsersProperty().set(!view.isFilteringUsersProperty().get());
     }
 }
