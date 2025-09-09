@@ -12,14 +12,8 @@ import javafx.stage.Stage;
 public class BackButton extends HBox {
     public BackButton(Stage stage, Scene prevScene) {
         super();
-        ImageView backIcon = new ImageView(new Image(String.valueOf(getClass().getResource("/images/back.png"))));
-        backIcon.setFitWidth(20);
-        backIcon.setFitHeight(20);
 
-        Button backBtn = new Button();
-        backBtn.setGraphic(backIcon);
-        backBtn.getStyleClass().add("back-button");
-
+        Button backBtn = new IconButton("/images/back.png");
         backBtn.setOnAction(e -> {stage.setScene(prevScene);});
         this.getChildren().add(backBtn);
         this.setAlignment(Pos.BOTTOM_RIGHT);

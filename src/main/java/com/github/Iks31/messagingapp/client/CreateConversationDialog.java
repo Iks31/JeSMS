@@ -1,6 +1,8 @@
 package com.github.Iks31.messagingapp.client;
 
+import com.github.Iks31.messagingapp.client.ui_components.IconButton;
 import com.github.Iks31.messagingapp.common.Conversation;
+import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -26,6 +28,8 @@ public class CreateConversationDialog extends Stage {
     private final TextField userField = new TextField();
     private final TextField chatNameField = new TextField();
     private final Label statusLabel = new Label();
+    private final Button addUserButton = new IconButton("/images/plus.png");
+    private final Button undoButton = new IconButton("/images/undo.png");
     private final TextButton createButton = new TextButton("Create", "button-primary");
 
     private String conversationName = "";
@@ -39,10 +43,11 @@ public class CreateConversationDialog extends Stage {
 
         userField.setPromptText("Enter username");
         chatNameField.setPromptText("Enter chat name");
-        chatNameField.setVisible(false);
+        chatNameField.visibleProperty().bind(Bindings.size(chatMembers).greaterThan(1));
+        chatNameField.managedProperty().bind(chatNameField.visibleProperty());
 
-        Button addUserButton = new Button("+");
         addUserButton.setOnAction(e -> addUser());
+        undoButton.setOnAction(e -> undo());
 
         membersList.setPrefHeight(100);
 
@@ -50,7 +55,7 @@ public class CreateConversationDialog extends Stage {
 
         VBox layout = new VBox(10,
                 new Label("Add users:"),
-                new HBox(5, userField, addUserButton),
+                new HBox(5, userField, addUserButton, undoButton),
                 membersList,
                 chatNameField,
                 statusLabel,
@@ -59,6 +64,7 @@ public class CreateConversationDialog extends Stage {
         layout.setPadding(new Insets(10));
 
         Scene scene = new Scene(layout, 300, 300);
+        scene.getStylesheets().add("style.css");
         setScene(scene);
     }
 
@@ -113,7 +119,14 @@ public class CreateConversationDialog extends Stage {
             userField.clear();
             statusLabel.setText("");
         }
-        chatNameField.setVisible(chatMembers.size() > 1);
+    }
+
+    private void undo() {
+        if (chatMembers.isEmpty()) {
+            return;
+        } else {
+            chatMembers.removeLast();
+        }
     }
 
     public String getConversationName() {

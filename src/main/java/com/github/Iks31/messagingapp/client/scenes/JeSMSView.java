@@ -4,9 +4,12 @@ import com.github.Iks31.messagingapp.client.ClientApp;
 import com.github.Iks31.messagingapp.client.ClientNetworking;
 import com.github.Iks31.messagingapp.client.ClientNetworking.*;
 import com.github.Iks31.messagingapp.client.UI;
+import com.github.Iks31.messagingapp.client.ui_components.IconButton;
 import com.github.Iks31.messagingapp.common.ChatMessage;
 import com.github.Iks31.messagingapp.common.Conversation;
 import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
@@ -20,9 +23,10 @@ import java.time.format.DateTimeFormatter;
 public class JeSMSView implements UI {
 
     // Sidebar
-    private final Button settingsButton = new Button("Settings");
-    private final Button createConversationButton = new Button("Create Conversation");
-    private final Button filterToggleButton = new Button("Filter Users");
+    private final Button settingsButton = new IconButton("/images/settings.png");
+    private final Button createConversationButton = new IconButton("/images/create-chat.png");
+    private final Button filterToggleButton = new IconButton("/images/filter.png");
+    private final SimpleBooleanProperty isFilteringUsers = new SimpleBooleanProperty(false);
     private final VBox sidebar = new VBox(createConversationButton, filterToggleButton, settingsButton);
 
     // List of active conversations
@@ -35,7 +39,7 @@ public class JeSMSView implements UI {
     private final Label currConversationLabel = new Label("Current Conversation");
     private ListView<ChatMessage> currMessagesList = new ListView<>(); //changed to string as we just want to show the sender and message
     private final TextArea messageTextArea = new TextArea();
-    private final Button sendMessageButton = new Button("Send Message");
+    private final Button sendMessageButton = new IconButton("/images/send.png");
     private final HBox sendMessageContainer = new HBox(messageTextArea, sendMessageButton);
     private final VBox currConversationContainer = new VBox(currConversationLabel, currMessagesList, sendMessageContainer);
 
@@ -60,6 +64,8 @@ public class JeSMSView implements UI {
 
         // Sidebar has small fixed width
         sidebar.setPrefWidth(50);
+        activeConversationsFilter.visibleProperty().bind(isFilteringUsers);
+        activeConversationsFilter.setPromptText("Filter by conversation...");
 
         // Conversations container takes 1/3
         conversationsContainer.setPrefWidth(DEFAULT_WIDTH / 3.0);
@@ -71,7 +77,14 @@ public class JeSMSView implements UI {
         HBox.setHgrow(currConversationContainer, Priority.ALWAYS);
         currConversationContainer.setPrefWidth((DEFAULT_WIDTH * 2) / 3.0);
 
+        // Adding styles to necessary components
         scene.getStylesheets().add("style.css");
+        activeConversationsLabel.getStyleClass().add("section-header");
+        currConversationLabel.getStyleClass().add("section-header");
+        sidebar.getStyleClass().add("sidebar");
+        conversationsContainer.getStyleClass().add("conversations-container");
+        currConversationContainer.getStyleClass().add("curr-conversation-container");
+
         setUpCellFactory();
     }
 
@@ -123,9 +136,11 @@ public class JeSMSView implements UI {
         return sendMessageButton;
     }
     public Button getFilterToggleButton () { return filterToggleButton; }
+    public BooleanProperty isFilteringUsersProperty() { return isFilteringUsers; }
     public Button getSettingsButton () { return settingsButton; }
     public ListView<String> getConversationsList () { return conversationsList; }
     public ListView<ChatMessage> getCurrMessagesList () { return currMessagesList; }
+    public Label getCurrConversationLabel () { return currConversationLabel; }
     public TextArea getMessageTextArea () { return messageTextArea; }
 
 }
