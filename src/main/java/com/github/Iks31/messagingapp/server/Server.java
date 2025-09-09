@@ -5,7 +5,6 @@ import com.github.Iks31.messagingapp.common.Conversation;
 import com.github.Iks31.messagingapp.common.NetworkMessage;
 import com.github.Iks31.messagingapp.server.db.DBResult;
 import com.github.Iks31.messagingapp.server.db.MongoDatabase;
-import com.github.Iks31.messagingapp.server.db.MongoDatabase.*;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -16,10 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import org.bson.Document;
-
-import static com.github.Iks31.messagingapp.server.db.MongoDatabase.*;
 
 public class Server implements Runnable {
 
@@ -91,9 +86,9 @@ public class Server implements Runnable {
     class ConnectionHandler implements Runnable{
         private Socket client;
         private ObjectInputStream ois;
-        private ObjectOutputStream oos;
+        private final ObjectOutputStream oos;
         private InetAddress address;
-        private String username = null;
+        private String username;
 
         public ConnectionHandler(Socket client, InetAddress address, ObjectInputStream ois, ObjectOutputStream oos){
             this.client = client;
@@ -112,19 +107,16 @@ public class Server implements Runnable {
                 NetworkMessage message;
                 while((message = (NetworkMessage) ois.readObject()) != null){
                     System.out.println("[RECEIVED] " + message.getFlag() + " from " + address);
-                    if (message.getFlag().equals("DISCONNECT")) {
-                        System.out.println("[DISCONNECT] " + address + " disconnected from the server");
-                        shutdown();
-                    } else if (message.getFlag().equals("LOGIN")) {
-                        serveLoginRequest((ArrayList<String>) message.getContent());
-                    } else if (message.getFlag().equals("REGISTER")) {
-                        serveRegistrationRequest((ArrayList<String>) message.getContent());
-                    } else if (message.getFlag().equals("GET_CONVERSATIONS")) {
-                        serveConversationsRequest();
-                    } else if (message.getFlag().equals("SEND_CHAT")) {
-                        serveSendChatRequest((ArrayList<Object>) message.getContent());
-                    } else if (message.getFlag().equals("CREATE_CONVERSATION")) {
-                        serveCreateConversationRequest((Conversation) message.getContent());
+                    switch (message.getFlag()) {
+                        case "DISCONNECT" -> {
+                            System.out.println("[DISCONNECT] " + address + " disconnected from the server");
+                            shutdown();
+                        }
+                        case "LOGIN" -> serveLoginRequest((ArrayList<String>) message.getContent());
+                        case "REGISTER" -> serveRegistrationRequest((ArrayList<String>) message.getContent());
+                        case "GET_CONVERSATIONS" -> serveConversationsRequest();
+                        case "SEND_CHAT" -> serveSendChatRequest((ArrayList<Object>) message.getContent());
+                        case "CREATE_CONVERSATION" -> serveCreateConversationRequest((Conversation) message.getContent());
                     }
                 }
             }
@@ -220,8 +212,9 @@ public class Server implements Runnable {
                 if(u.equals(username)){
                     continue;
                 }
-                if(loggedInConnections.containsKey(u)){
+                if (loggedInConnections.containsKey(u)) {
                     realtime = true;
+                    break;
                 }
             }
             return realtime;
@@ -240,7 +233,7 @@ public class Server implements Runnable {
                 }
             } else {
                 sendMessage(new NetworkMessage("REALTIME_CONVERSATION_FAIL", log.getMessage()));
-            };
+            }
         }
 
         public void realtimeChat(ChatMessage message, String sender, ArrayList<String> users) {
@@ -274,8 +267,8 @@ public class Server implements Runnable {
 
         public void shutdown(){
             try {
-                if (ois != null) {ois.close();};
-                if (oos != null) {oos.close();};
+                if (ois != null) {ois.close();}
+                if (oos != null) {oos.close();}
                 if (!client.isClosed()) {
                     loggedInConnections.remove(username);
                     connections.remove(this);
