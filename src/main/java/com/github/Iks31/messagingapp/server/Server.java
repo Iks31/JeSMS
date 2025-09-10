@@ -113,6 +113,7 @@ public class Server implements Runnable {
                             shutdown();
                         }
                         case "LOGIN" -> serveLoginRequest((ArrayList<String>) message.getContent());
+                        case "LOGOUT" -> logOut();
                         case "REGISTER" -> serveRegistrationRequest((ArrayList<String>) message.getContent());
                         case "GET_CONVERSATIONS" -> serveConversationsRequest();
                         case "SEND_CHAT" -> serveSendChatRequest((ArrayList<Object>) message.getContent());
@@ -212,7 +213,7 @@ public class Server implements Runnable {
         }
 
         public void serveEditMessageRequest(ArrayList<Object> chatContent) {
-            System.out.println("[EDIT MESSAGE] " + address + " sent a chat");
+            System.out.println("[EDIT MESSAGE] " + address + " edited a chat");
             String groupName = chatContent.get(0).toString();
             ArrayList<String> users = (ArrayList<String>) chatContent.get(1);
             ChatMessage message = (ChatMessage)chatContent.get(2);
@@ -293,18 +294,21 @@ public class Server implements Runnable {
 
         public void shutdown(){
             try {
+                loggedInConnections.remove(username);
+                connections.remove(this);
                 if (ois != null) {ois.close();}
                 if (oos != null) {oos.close();}
                 if (!client.isClosed()) {
-                    loggedInConnections.remove(username);
-                    connections.remove(this);
                     client.close();
                 }
             } catch(IOException ignored) {}
         }
 
         public void logOut(){
+            System.out.println("[LOGOUT] " + address + " logged out");
             loggedInConnections.remove(username);
+            System.out.println(loggedInConnections);
+            sendMessage(new NetworkMessage("LOGOUT_SUCCESS", null));
         }
 
     }

@@ -2,11 +2,14 @@ package com.github.Iks31.messagingapp.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.Iks31.messagingapp.client.scenes.JeSMSView;
+import com.github.Iks31.messagingapp.client.scenes.StartMenu;
 import com.github.Iks31.messagingapp.common.ChatMessage;
 import com.github.Iks31.messagingapp.common.Conversation;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.scene.control.Alert;
 
 import java.lang.reflect.Array;
@@ -17,6 +20,7 @@ import java.util.List;
 public class JeSMSController {
     private final JeSMSView view;
     ObservableList<Conversation> conversationsList = FXCollections.observableArrayList();
+    FilteredList<Conversation> filteredConversations = new FilteredList<>(conversationsList);
    // private final Conversations conversations;
 
     public JeSMSController(JeSMSView view) {
@@ -41,16 +45,16 @@ public class JeSMSController {
                 Platform.runLater(() -> realTimeConversation((Conversation) msg.getContent()));
             } else if ("CREATE_CONVERSATION_SUCCESS".equals(msg.getFlag())) {
                 Platform.runLater(() -> {
-                    // Code here for successful conversation creation
-                    // e.g. new conversations request to maintain consistency with server
                     ClientApp.getClientNetworking().conversationsRequest();
                 });
             } else if ("CREATE_CONVERSATION_FAIL".equals(msg.getFlag())) {
                 Platform.runLater(() -> {
-                   // Code for conversation failure
-                   // e.g. Alert that informs user that the conversation already exists or that a user entered
-                   // does not exist
-                    ClientApp.showErrorDialog(Alert.AlertType.WARNING, "Conversation Error", "Failed to Create Conversation", msg.getContent().toString());
+                   ClientApp.showErrorDialog(Alert.AlertType.WARNING, "Conversation Error", "Failed to Create Conversation", msg.getContent().toString());
+                });
+            } else if ("LOGOUT_SUCCESS".equals(msg.getFlag())) {
+                Platform.runLater(() -> {
+                    ClientApp.getClientNetworking().setUsername(null);
+                    view.stage.setScene(new StartMenu().getScene(view.stage));
                 });
             }
         });
@@ -59,6 +63,8 @@ public class JeSMSController {
         view.getSendMessageButton().setOnAction(e -> sendMsg());
         view.getConversationsList().setOnMouseClicked(e -> messageDataSetup());
         view.getFilterToggleButton().setOnAction(e -> toggleFilter());
+        view.getLogoutButton().setOnAction(e -> logout());
+        setupConversationFiltering();
     }
 
     // Sets up the messages depending on what conversation is being viewed
@@ -111,8 +117,29 @@ public class JeSMSController {
                 e.printStackTrace();
             }
         }
-        view.getConversationsList().setItems(conversationsList);
+        view.getConversationsList().setItems(filteredConversations);
     }
+
+    private void setupConversationFiltering() {
+        filteredConversations.predicateProperty().bind(Bindings.createObjectBinding(() -> {
+            String filter = view.getActiveConversationsFilter().getText();
+            if (filter == null || filter.isBlank()) {
+                return c -> true;
+            }
+            String lower = filter.toLowerCase();
+            return c -> {
+                if (c.name != null && c.name.toLowerCase().contains(lower)) {
+                    return true;
+                }
+                for (String user : c.users) {
+                    if (user.toLowerCase().contains(lower)) return true;
+                }
+                return false;
+            };
+            }, view.getActiveConversationsFilter().textProperty())
+        );
+    }
+
     //new method to send a message after button has been clicked
     //creates a new message and adds it to the observable list and then calls again to reformat messages for user
     public void sendMsg() {
@@ -145,6 +172,7 @@ public class JeSMSController {
         view.getMessageTextArea().clear();
         messageDataSetup();
     }
+
     public void createConversation() {
         CreateConversationDialog dialog = new CreateConversationDialog(conversationsList);
         dialog.showAndWait();
@@ -159,7 +187,13 @@ public class JeSMSController {
             ClientApp.getClientNetworking().createConversationRequest(conversation);
         }
     }
+
     public void toggleFilter() {
         view.isFilteringUsersProperty().set(!view.isFilteringUsersProperty().get());
+    }
+
+    public void logout() {
+        // Send logout request
+        ClientApp.getClientNetworking().logoutRequest();
     }
 }

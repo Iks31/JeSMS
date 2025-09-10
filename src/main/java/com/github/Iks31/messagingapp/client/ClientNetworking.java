@@ -90,6 +90,10 @@ public class ClientNetworking {
         sendMessage(new NetworkMessage("CREATE_CONVERSATION", conversation));
     }
 
+    public void logoutRequest() {
+        sendMessage(new NetworkMessage("LOGOUT", null));
+    }
+
     public void close() {
         try {
             if (oos != null) {
@@ -109,6 +113,7 @@ public class ClientNetworking {
     public String getUsername() {
         return username;
     }
+    public void setUsername(String username) { this.username = username; }
 
     private static class MessageListenerService extends Service<NetworkMessage> {
         private final ObjectInputStream ois;
