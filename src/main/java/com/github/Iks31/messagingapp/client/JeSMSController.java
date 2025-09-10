@@ -31,8 +31,8 @@ public class JeSMSController {
     private void attachEvents() {
         ClientApp.getClientNetworking().setMessageHandler(msg -> {
             if ("CONVERSATIONS_RECEIVED".equals(msg.getFlag())) {
-                ArrayList<String> conversationsjson = (ArrayList<String>)msg.getContent();
-                Platform.runLater(() -> formatConversations(conversationsjson));
+                ArrayList<String> conversationsJson = (ArrayList<String>) msg.getContent();
+                Platform.runLater(() -> formatConversations(conversationsJson));
                 //TODO conversation and messages here
                 //  this.conversations = new Conversations();
                 //  this.displayedMessages = new Message();
@@ -43,9 +43,7 @@ public class JeSMSController {
             } else if ("REALTIME_CONVERSATION".equals(msg.getFlag())) {
                 Platform.runLater(() -> realTimeConversation((Conversation) msg.getContent()));
             } else if ("CREATE_CONVERSATION_SUCCESS".equals(msg.getFlag())) {
-                Platform.runLater(() -> {
-                    ClientApp.getClientNetworking().conversationsRequest();
-                });
+                Platform.runLater(() -> ClientApp.getClientNetworking().conversationsRequest());
             } else if ("CREATE_CONVERSATION_FAIL".equals(msg.getFlag())) {
                 Platform.runLater(() -> {
                    ClientApp.showErrorDialog(Alert.AlertType.WARNING, "Conversation Error", "Failed to Create Conversation", msg.getContent().toString());
@@ -91,7 +89,7 @@ public class JeSMSController {
     }
 
     public void realTimeMessage(ArrayList<Object> content) {
-        ChatMessage message = (ChatMessage)content.get(0);
+        ChatMessage message = (ChatMessage) content.get(0);
         ArrayList<String> users = (ArrayList<String>) content.get(1);
         for(Conversation conversation : conversationsList){
             if(users.equals(conversation.users)){
@@ -142,8 +140,6 @@ public class JeSMSController {
         );
     }
 
-    //new method to send a message after button has been clicked
-    //creates a new message and adds it to the observable list and then calls again to reformat messages for user
     public void sendMsg() {
         Conversation currConversation = view.getConversationsList().getSelectionModel().getSelectedItem();
         if (currConversation == null) return;
