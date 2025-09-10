@@ -12,7 +12,6 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.scene.control.Alert;
 
-import java.lang.reflect.Array;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,12 +68,12 @@ public class JeSMSController {
 
     // Sets up the messages depending on what conversation is being viewed
     public void messageDataSetup() {
-        int index = view.getConversationsList().getSelectionModel().getSelectedIndex();
-        if (index >= conversationsList.size()) {
+        Conversation selectedConversation = view.getConversationsList().getSelectionModel().getSelectedItem();
+        if (selectedConversation == null) {
             return;
         }
-        String currName = conversationsList.get(index).name;
-        List<String> currUsers = conversationsList.get(index).users;
+        String currName = selectedConversation.name;
+        List<String> currUsers = selectedConversation.users;
         if (currName.isEmpty()) {
             if (currUsers.getFirst().equals(ClientApp.getClientNetworking().getUsername())) {
                 view.getCurrConversationLabel().setText(currUsers.getLast());
@@ -84,20 +83,22 @@ public class JeSMSController {
         } else {
             view.getCurrConversationLabel().setText(currName);
         }
-        ObservableList<ChatMessage> messages = FXCollections.observableArrayList();
-        messages.addAll(conversationsList.get(index).messages);
+
+        // Load Messages
+        ObservableList<ChatMessage> messages = FXCollections.observableArrayList(selectedConversation.messages);
         view.getCurrMessagesList().setItems(messages);
-        view.getCurrMessagesList().scrollTo(view.getCurrMessagesList().getItems().size() - 1);
+        view.getCurrMessagesList().scrollTo(messages.size() - 1);
     }
 
-    public void realTimeMessage(ArrayList<Object> content){
+    public void realTimeMessage(ArrayList<Object> content) {
         ChatMessage message = (ChatMessage)content.get(0);
-        ArrayList<String> users = (ArrayList<String>)content.get(1);
+        ArrayList<String> users = (ArrayList<String>) content.get(1);
         for(Conversation conversation : conversationsList){
             if(users.equals(conversation.users)){
                 conversation.messages.add(message);
             }
         }
+        sortConversations();
         messageDataSetup();
     }
 
@@ -117,6 +118,7 @@ public class JeSMSController {
                 e.printStackTrace();
             }
         }
+        sortConversations();
         view.getConversationsList().setItems(filteredConversations);
     }
 
@@ -143,13 +145,12 @@ public class JeSMSController {
     //new method to send a message after button has been clicked
     //creates a new message and adds it to the observable list and then calls again to reformat messages for user
     public void sendMsg() {
-        int index = view.getConversationsList().getSelectionModel().getSelectedIndex();
-        if (index < 0) return;
+        Conversation currConversation = view.getConversationsList().getSelectionModel().getSelectedItem();
+        if (currConversation == null) return;
         String enteredText = view.getMessageTextArea().getText();
         if (enteredText.isEmpty()) {
             return;
         }
-        Conversation currConversation = conversationsList.get(index);
         ChatMessage message = new ChatMessage();
         {
             message.sender = ClientApp.getClientNetworking().getUsername();
@@ -170,6 +171,7 @@ public class JeSMSController {
         conversationData.add(message);
         ClientApp.getClientNetworking().messageRequest(conversationData);
         view.getMessageTextArea().clear();
+        sortConversations();
         messageDataSetup();
     }
 
@@ -186,6 +188,18 @@ public class JeSMSController {
             conversation.messages = new ArrayList<>();
             ClientApp.getClientNetworking().createConversationRequest(conversation);
         }
+    }
+
+    public void sortConversations() {
+        conversationsList.sort((c1, c2) -> {
+            if (c1.messages.isEmpty() && c2.messages.isEmpty()) return 0;
+            if (c1.messages.isEmpty()) return 1;
+            if (c2.messages.isEmpty()) return -1;
+
+            // Compare most recent timestamps (newest first)
+            return c2.messages.getLast().getTimestampInstant()
+                    .compareTo(c1.messages.getLast().getTimestampInstant());
+        });
     }
 
     public void toggleFilter() {
