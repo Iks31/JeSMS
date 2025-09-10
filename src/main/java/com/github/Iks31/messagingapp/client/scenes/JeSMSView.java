@@ -21,13 +21,14 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 public class JeSMSView implements UI {
-
+    public Stage stage;
     // Sidebar
     private final Button settingsButton = new IconButton("/images/settings.png");
     private final Button createConversationButton = new IconButton("/images/create-chat.png");
     private final Button filterToggleButton = new IconButton("/images/filter.png");
     private final SimpleBooleanProperty isFilteringUsers = new SimpleBooleanProperty(false);
-    private final VBox sidebar = new VBox(createConversationButton, filterToggleButton, settingsButton);
+    private final Button logoutButton = new IconButton("/images/logout.png");
+    private final VBox sidebar = new VBox(createConversationButton, filterToggleButton, settingsButton, logoutButton);
 
     // List of active conversations
     private final Label activeConversationsLabel = new Label("Active Conversations");
@@ -91,6 +92,7 @@ public class JeSMSView implements UI {
 
     @Override
     public Scene getScene (Stage stage) {
+        this.stage = stage;
         return scene;
     }
 
@@ -165,15 +167,13 @@ public class JeSMSView implements UI {
         });
     }
 
-    public Button getCreateConversationButton () {
-        return createConversationButton;
-    }
-    public Button getSendMessageButton () {
-        return sendMessageButton;
-    }
+    public Button getCreateConversationButton () { return createConversationButton; }
+    public Button getSendMessageButton () { return sendMessageButton; }
     public Button getFilterToggleButton () { return filterToggleButton; }
-    public BooleanProperty isFilteringUsersProperty() { return isFilteringUsers; }
+    public Button getLogoutButton () { return logoutButton; }
     public Button getSettingsButton () { return settingsButton; }
+    public BooleanProperty isFilteringUsersProperty() { return isFilteringUsers; }
+    public TextField getActiveConversationsFilter() { return activeConversationsFilter; }
     public ListView<Conversation> getConversationsList () { return conversationsList; }
     public ListView<ChatMessage> getCurrMessagesList () { return currMessagesList; }
     public Label getCurrConversationLabel () { return currConversationLabel; }

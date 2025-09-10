@@ -91,7 +91,7 @@ public class MongoDatabase {
             MongoCollection<Document> collection = Collection("users");
             Document user = collection.find(eq("user", username)).first();
             if(user == null){
-                return new DBResult<>(false, "user does not exist");
+                return new DBResult<>(false, "User(s) does not exist");
             }
             else{
                 ArrayList<String> credentials = new ArrayList<>();
@@ -226,7 +226,7 @@ public class MongoDatabase {
 
             for(String user: users){
                 if(!userExists(user).isSuccess()){
-                    return new DBResult<>(false,"user does not exist");
+                    return new DBResult<>(false,"User(s) does not exist");
                 }
             }
 
