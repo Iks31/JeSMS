@@ -1,6 +1,5 @@
 package com.github.Iks31.messagingapp.server.db;
 
-import com.github.Iks31.messagingapp.client.ClientApp;
 import com.github.Iks31.messagingapp.common.ChatMessage;
 import com.mongodb.client.*;
 import com.mongodb.client.MongoClient;
@@ -8,10 +7,8 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 
-import java.lang.reflect.Array;
+
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -21,11 +18,6 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
 
 public class MongoDatabase {
     static String uri = "mongodb+srv://ikerdz3101:<dbpassword>@jesmscluster0.9ownp4i.mongodb.net/?retryWrites=true&w=majority&appName=JeSMScluster0";
@@ -179,7 +171,7 @@ public class MongoDatabase {
             if (result.getModifiedCount() == 0) {
                 return new DBResult<>(false, "No document was updated. Check filters.");
             }
-            //redundant if it is already true but it will simply return nothing
+            // Redundant if it is already true, but it will simply return nothing
             UpdateResult result2 = collection.updateOne(filter, update2, options);
 
             return new DBResult<>(true, "successfully edited message");
@@ -255,10 +247,9 @@ public class MongoDatabase {
             }
             MongoCollection<Document> collection = Collection("conversations");
             Document user = collection.find(eq("users", users)).first();
-            if(user !=null)return true;
-            else return false;
+            return user != null;
         }
-        catch (Exception e) {
+        catch (Exception ignored) {
 
         }
         return true;

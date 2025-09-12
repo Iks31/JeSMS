@@ -125,6 +125,7 @@
 
 /* Conversations container */
 .conversations-container {
+    -fx-max-width: 600px;
     -fx-background-color: #2b2b2b;
     -fx-border-width: 0 1 0 1;
     -fx-border-color: #474350;
@@ -132,6 +133,7 @@
 
 /* Current conversation container */
 .curr-conversation-container {
+    -fx-padding: 10;
     -fx-background-color: #1e1e1e;
     -fx-border-width: 0 0 0 1;
     -fx-border-color: #474350;
@@ -167,6 +169,22 @@
     -fx-text-fill: white;
 }
 
+.conversation-name {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.conversation-preview {
+    -fx-font-size: 12px;
+    -fx-text-fill: #9a9a9a;
+}
+
+.conversation-time {
+    -fx-font-size: 10px;
+    -fx-text-fill: gray;
+    -fx-alignment: center-right;
+}
+
 /* ============================
    Message bubbles
    ============================ */
@@ -174,9 +192,11 @@
 /* Base bubble */
 .message-bubble {
     -fx-padding: 6 10;
-    -fx-background-radius: 16;
+    -fx-background-radius: 12;
     -fx-spacing: 3;
     -fx-font-size: 13px;
+    -fx-background-insets: 0;
+    -fx-wrap-text: true;
 }
 
 /* Actual message text */
@@ -216,15 +236,15 @@
 }
 
 .received-message .message-bubble {
-    -fx-background-color: #e6e6e6; /* light gray */
+    -fx-background-color: #e6e6e6;
 }
 
 .received-message .message-content {
-    -fx-text-fill: #333333; /* dark text */
+    -fx-text-fill: #333333;
 }
 
 .received-message .message-meta {
-    -fx-text-fill: #474350; /* davy’s gray */
+    -fx-text-fill: #474350;
 }
 
 /* ============================
