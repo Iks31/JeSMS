@@ -10,6 +10,8 @@ import com.github.Iks31.messagingapp.common.Conversation;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
@@ -63,20 +65,31 @@ public class JeSMSView implements UI {
         messageTextArea.setMaxHeight(100);
         HBox.setHgrow(messageTextArea, Priority.ALWAYS);
 
-        // Sidebar has small fixed width
-        sidebar.setPrefWidth(50);
+        // Sidebar
+        sidebar.setMinWidth(50);
+        sidebar.setPrefWidth(60);
+        sidebar.setMaxWidth(80);
+        VBox.setVgrow(createConversationButton, Priority.NEVER);
+        VBox.setVgrow(filterToggleButton, Priority.NEVER);
+        VBox.setVgrow(settingsButton, Priority.NEVER);
+        VBox.setVgrow(logoutButton, Priority.ALWAYS);
+
+        // Filter Box with Toggle
         activeConversationsFilter.visibleProperty().bind(isFilteringUsers);
         activeConversationsFilter.setPromptText("Filter by conversation...");
+        activeConversationsFilter.setMaxWidth(Double.MAX_VALUE);
 
-        // Conversations container takes 1/3
-        conversationsContainer.setPrefWidth(DEFAULT_WIDTH / 3.0);
+        // Conversations container
         conversationsContainer.setMinWidth(200);
-        conversationsContainer.setMaxWidth(400);
+        conversationsContainer.setPrefWidth(300);
+        conversationsContainer.setMaxWidth(600);
         HBox.setHgrow(conversationsContainer, Priority.SOMETIMES);
+        VBox.setVgrow(conversationsList, Priority.ALWAYS);
 
-        // Current conversation takes 2/3
+        // Current conversation
         HBox.setHgrow(currConversationContainer, Priority.ALWAYS);
-        currConversationContainer.setPrefWidth((DEFAULT_WIDTH * 2) / 3.0);
+        VBox.setVgrow(currMessagesList, Priority.ALWAYS);
+        VBox.setVgrow(sendMessageContainer, Priority.NEVER);
 
         // Adding styles to necessary components
         scene.getStylesheets().add("style.css");
@@ -113,19 +126,22 @@ public class JeSMSView implements UI {
 
                     // Message content
                     Label content = new Label(msg.content);
-                    content.setWrapText(true);
-                    content.setMaxWidth(300);
                     content.getStyleClass().add("message-content");
+                    content.setWrapText(true);
 
                     VBox bubble = new VBox(meta, content);
                     bubble.getStyleClass().add("message-bubble");
-
-                    HBox wrapper = new HBox(bubble);
-                    wrapper.getStyleClass().add(msg.sender.equals(ClientApp.getClientNetworking().getUsername())
-                            ? "sent-message"
-                            : "received-message"
+                    bubble.setMinWidth(80);
+                    bubble.setMaxWidth(500);
+                    bubble.maxWidthProperty().bind(
+                            currMessagesList.widthProperty().multiply(0.50)
                     );
 
+                    HBox wrapper = new HBox(bubble);
+                    wrapper.setFillHeight(true);
+                    boolean sentByMe = msg.sender.equals(ClientApp.getClientNetworking().getUsername());
+                    wrapper.setAlignment(sentByMe ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
+                    wrapper.getStyleClass().add(sentByMe ? "sent-message" : "received-message");
                     setGraphic(wrapper);
                 }
             }
@@ -143,6 +159,9 @@ public class JeSMSView implements UI {
                 } else {
 
                     Label conversationNameLabel = new Label();
+                    conversationNameLabel.getStyleClass().add("conversation-name");
+                    conversationNameLabel.setWrapText(true);
+
                     if (conversation.name.isEmpty()) {
                         if (conversation.users.getFirst().equals(ClientApp.getClientNetworking().getUsername())) {
                             conversationNameLabel.setText(conversation.users.getLast());
@@ -152,16 +171,45 @@ public class JeSMSView implements UI {
                     } else {
                         conversationNameLabel.setText(conversation.name);
                     }
+
                     Label recentChatContent = new Label();
+                    recentChatContent.getStyleClass().add("conversation-preview");
+                    recentChatContent.setWrapText(true);
+                    recentChatContent.setMaxHeight(40);
+                    recentChatContent.setTextOverrun(OverrunStyle.ELLIPSIS);
+
                     Label recentChatTime = new Label();
+                    recentChatTime.getStyleClass().add("conversation-time");
+                    recentChatTime.setWrapText(true);
+                    HBox.setHgrow(recentChatTime, Priority.NEVER);
+
                     if (!conversation.messages.isEmpty()) {
                         ChatMessage recentMessage = conversation.messages.getLast();
-                        recentChatContent.setText(recentMessage.content);
+                        if (recentMessage.sender.equals(ClientApp.getClientNetworking().getUsername())) {
+                            recentChatContent.setText("You: " + recentMessage.content);
+                        } else {
+                            recentChatContent.setText(recentMessage.sender + ": " + recentMessage.content);
+                        }
                         recentChatTime.setText(DATE_TIME_FORMATTER.format(recentMessage.getTimestampInstant()));
+                    } else {
+                        recentChatContent.setText("No messages yet");
+                        recentChatTime.setText("");
                     }
-                    VBox conversationContainer = new VBox(conversationNameLabel, recentChatContent, recentChatTime);
-                    HBox wrapper = new HBox(conversationContainer);
-                    setGraphic(wrapper);
+
+                    HBox topRow = new HBox(conversationNameLabel, recentChatTime);
+                    HBox.setHgrow(conversationNameLabel, Priority.ALWAYS);
+                    topRow.setAlignment(Pos.CENTER_LEFT);
+                    topRow.setSpacing(8);
+
+                    VBox conversationContainer = new VBox(topRow, recentChatContent);
+                    conversationContainer.setSpacing(4);
+                    conversationContainer.setPadding(new Insets(6));
+
+                    conversationContainer.maxWidthProperty().bind(conversationsList.widthProperty().subtract(10));
+                    conversationNameLabel.maxWidthProperty().bind(conversationContainer.maxWidthProperty().subtract(recentChatTime.getWidth()));
+                    recentChatContent.maxWidthProperty().bind(conversationContainer.maxWidthProperty());
+
+                    setGraphic(conversationContainer);
                 }
             }
         });
