@@ -17,36 +17,40 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class LoginScreen implements UI {
+    // TODO change scope of components?
+    // TODO bindings to disable buttons based on text field contents
     private final Label statusLabel = new Label("");
-    // Changes needed: scope of UI components to object variables for access within methods
     @Override
     public Scene getScene(Stage stage) {
         Label titleLabel = new Label("Login");
 
+        // Grid layout for UI
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(15);
         grid.setAlignment(Pos.CENTER);
 
+        // Login form components
         Label usernameLabel = new Label("Please Enter Your Username: ");
         TextField usernameField = new TextField();
         Label passwordLabel = new Label("Please Enter Your Password: ");
         TextField passwordField = new PasswordField();
 
-
+        // Layout of components in grid
         grid.add(usernameLabel, 0, 0);
         grid.add(usernameField, 1, 0);
         grid.add(passwordLabel, 0, 1);
         grid.add(passwordField, 1, 1);
         grid.add(statusLabel, 0, 2, 2, 1);
 
+        // UI buttons
         TextButton submitBtn = new TextButton("Submit", "button-primary");
-        //submitBtn.disableProperty().bind(); Refer to bindings lecture slides
         submitBtn.setOnAction(e -> loginVerification(usernameField.getText(), passwordField.getText()));
         ClearButton clrBtn = new ClearButton(usernameField, passwordField);
         HBox btnBox = new HBox(15, submitBtn, clrBtn);
         btnBox.setAlignment(Pos.CENTER);
 
+        // Main container for most UI components
         VBox centerBox = new VBox(20, titleLabel, grid, btnBox);
         centerBox.setAlignment(Pos.CENTER);
 
@@ -86,6 +90,7 @@ public class LoginScreen implements UI {
     }
 
     private void showJeSMS(Stage stage) {
+        // Creates main messaging UI on login success
         JeSMSView view = new JeSMSView();
         new JeSMSController(view);
         stage.setScene(view.getScene(stage));

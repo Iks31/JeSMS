@@ -46,10 +46,6 @@ public class JeSMSView implements UI {
     private final HBox sendMessageContainer = new HBox(messageTextArea, sendMessageButton);
     private final VBox currConversationContainer = new VBox(currConversationLabel, currMessagesList, sendMessageContainer);
 
-    // Bind text field content to displaying of list view items
-    // Conversations ordered by most recent message
-    // Clicking on a list view item will display a conversation
-
     // Formatter for datetime
     private static final DateTimeFormatter DATE_TIME_FORMATTER =
             DateTimeFormatter.ofPattern("MMM d, HH:mm").withZone(ZoneId.systemDefault());
@@ -99,6 +95,7 @@ public class JeSMSView implements UI {
         conversationsContainer.getStyleClass().add("conversations-container");
         currConversationContainer.getStyleClass().add("curr-conversation-container");
 
+        // Sets up list view appearances
         setUpMessageCellFactory();
         setUpConversationCellFactory();
     }
@@ -115,6 +112,7 @@ public class JeSMSView implements UI {
             protected void updateItem(ChatMessage msg, boolean empty) {
                 super.updateItem(msg, empty);
 
+                // No item edge case
                 if (empty || msg == null) {
                     setText(null);
                     setGraphic(null);
@@ -129,6 +127,7 @@ public class JeSMSView implements UI {
                     content.getStyleClass().add("message-content");
                     content.setWrapText(true);
 
+                    // Message bubble
                     VBox bubble = new VBox(meta, content);
                     bubble.getStyleClass().add("message-bubble");
                     bubble.setMinWidth(80);
@@ -137,6 +136,7 @@ public class JeSMSView implements UI {
                             currMessagesList.widthProperty().multiply(0.50)
                     );
 
+                    // Wrapper container for message needed for styling and alignment
                     HBox wrapper = new HBox(bubble);
                     wrapper.setFillHeight(true);
                     boolean sentByMe = msg.sender.equals(ClientApp.getClientNetworking().getUsername());
@@ -153,15 +153,19 @@ public class JeSMSView implements UI {
             @Override
             protected void updateItem(Conversation conversation, boolean empty) {
                 super.updateItem(conversation, empty);
+
+                // No item edge case
                 if (empty || conversation == null) {
                     setText(null);
                     setGraphic(null);
                 } else {
 
+                    // Conversation name
                     Label conversationNameLabel = new Label();
                     conversationNameLabel.getStyleClass().add("conversation-name");
                     conversationNameLabel.setWrapText(true);
 
+                    // Conversation name is group chat name or username the current user is messaging
                     if (conversation.name.isEmpty()) {
                         if (conversation.users.getFirst().equals(ClientApp.getClientNetworking().getUsername())) {
                             conversationNameLabel.setText(conversation.users.getLast());
@@ -172,17 +176,20 @@ public class JeSMSView implements UI {
                         conversationNameLabel.setText(conversation.name);
                     }
 
+                    // Preview of recent chat content
                     Label recentChatContent = new Label();
                     recentChatContent.getStyleClass().add("conversation-preview");
                     recentChatContent.setWrapText(true);
                     recentChatContent.setMaxHeight(40);
                     recentChatContent.setTextOverrun(OverrunStyle.ELLIPSIS);
 
+                    // Time of most recent chat
                     Label recentChatTime = new Label();
                     recentChatTime.getStyleClass().add("conversation-time");
                     recentChatTime.setWrapText(true);
                     HBox.setHgrow(recentChatTime, Priority.NEVER);
 
+                    // Only adds preview content if there is a recent message
                     if (!conversation.messages.isEmpty()) {
                         ChatMessage recentMessage = conversation.messages.getLast();
                         if (recentMessage.sender.equals(ClientApp.getClientNetworking().getUsername())) {
@@ -196,15 +203,18 @@ public class JeSMSView implements UI {
                         recentChatTime.setText("");
                     }
 
+                    // Top row of content displaying name and time
                     HBox topRow = new HBox(conversationNameLabel, recentChatTime);
                     HBox.setHgrow(conversationNameLabel, Priority.ALWAYS);
                     topRow.setAlignment(Pos.CENTER_LEFT);
                     topRow.setSpacing(8);
 
+                    // Overall container for an individual conversation
                     VBox conversationContainer = new VBox(topRow, recentChatContent);
                     conversationContainer.setSpacing(4);
                     conversationContainer.setPadding(new Insets(6));
 
+                    // Width scaling based on window sizing // TODO needs fixing to properly scale
                     conversationContainer.maxWidthProperty().bind(conversationsList.widthProperty().subtract(10));
                     conversationNameLabel.maxWidthProperty().bind(conversationContainer.maxWidthProperty().subtract(recentChatTime.getWidth()));
                     recentChatContent.maxWidthProperty().bind(conversationContainer.maxWidthProperty());

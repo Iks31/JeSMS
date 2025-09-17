@@ -9,6 +9,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+// Basic UI that gives information about the messaging app
 public class AboutScreen implements UI {
     @Override
     public Scene getScene (Stage stage) {

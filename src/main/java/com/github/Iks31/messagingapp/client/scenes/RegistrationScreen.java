@@ -16,9 +16,11 @@ import javafx.stage.Stage;
 
 public class RegistrationScreen implements UI {
     private final Label statusLabel = new Label();
-    // Changes needed: scope of UI components to object variables for access within methods
+    // TODO component scope, improve layout?
+    // TODO add bindings to relevant components
     @Override
     public Scene getScene (Stage stage) {
+        // Registration form components
         VBox vbox = new VBox(10, new Label("Registration "));
         Label usernameLabel = new Label("Please Enter A Username: ");
         TextField usernameField = new TextField();
@@ -27,15 +29,18 @@ public class RegistrationScreen implements UI {
         Label confrimPasswordLabel = new Label("Please Confirm Your Password: ");
         TextField confirmPasswordField = new PasswordField();
 
+        // UI buttons
         TextButton submitBtn = new TextButton("Submit", "button-primary");
-        submitBtn.setOnAction(e -> verifyRegistration(usernameField.getText(), passwordField.getText(), confirmPasswordField.getText()));
+        submitBtn.setOnAction(e -> validateRegistration(usernameField.getText(), passwordField.getText(), confirmPasswordField.getText()));
         ClearButton clrBtn = new ClearButton(usernameField, passwordField, confirmPasswordField);
-
         BackButton backBtn = new BackButton(stage, new StartMenu().getScene(stage));
+
+        // Root container
         vbox.getChildren().addAll(usernameLabel, usernameField, passwordLabel, passwordField,
                 confrimPasswordLabel, confirmPasswordField, statusLabel, submitBtn, clrBtn, backBtn);
         vbox.setAlignment(Pos.CENTER);
 
+        // Handling server responses - success or failure
         ClientApp.getClientNetworking().setMessageHandler(message -> {
             if ("REGISTER_SUCCESS".equals(message.getFlag())) {
                 Platform.runLater(() -> {
@@ -52,7 +57,8 @@ public class RegistrationScreen implements UI {
         return scene;
     }
 
-    private void verifyRegistration(String username, String password, String confirmedPassword) {
+    // Validation of registration details entered
+    private void validateRegistration(String username, String password, String confirmedPassword) {
         statusLabel.setText("");
         if (username.length() < 5 || username.length() > 15 || password.length() < 5 || password.length() > 15) {
             statusLabel.setText("Invalid Username/Password");

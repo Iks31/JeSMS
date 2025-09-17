@@ -7,6 +7,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.util.Duration;
 
+// A button that uses an icon and scales when hovered over
 public class IconButton extends Button {
     public IconButton(String iconPath) {
         super();

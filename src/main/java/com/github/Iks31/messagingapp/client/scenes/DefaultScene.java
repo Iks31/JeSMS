@@ -3,6 +3,7 @@ package com.github.Iks31.messagingapp.client.scenes;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 
+// Default appearance of all scenes within the app
 public class DefaultScene extends Scene {
     public DefaultScene(Parent root, Integer width, Integer height) {
         super(root, width, height);

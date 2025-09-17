@@ -11,10 +11,14 @@ import javafx.stage.Stage;
 
 public class BackButton extends HBox {
     public BackButton(Stage stage, Scene prevScene) {
+        // Functions as a normal button
         super();
-
+        // Uses an icon image button
         Button backBtn = new IconButton("/images/back.png");
+        // Sets current scene to the previous scene
         backBtn.setOnAction(e -> {stage.setScene(prevScene);});
+
+        // Ensures the button is always positioned in the bottom right of a UI
         this.getChildren().add(backBtn);
         this.setAlignment(Pos.BOTTOM_RIGHT);
         this.setPadding(new Insets(10));

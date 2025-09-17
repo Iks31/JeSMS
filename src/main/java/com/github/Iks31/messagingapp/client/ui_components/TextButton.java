@@ -4,6 +4,7 @@ import javafx.animation.ScaleTransition;
 import javafx.scene.control.Button;
 import javafx.util.Duration;
 
+// A styled button that displays text and scales when hovered over
 public class TextButton extends Button {
     public TextButton(String text, String style) {
         super(text);
