@@ -8,6 +8,7 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 
+// Class used for mapping JSON messages stored in MongoDB to ChatMessage objects
 public class ChatMessage implements Serializable {
     @JsonProperty("content")
     public String content;

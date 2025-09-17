@@ -5,9 +5,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+// Class used for mapping JSON conversations stored in MongoDB to Conversation objects
 public class Conversation implements Serializable {
-//    @JsonProperty("conversationName")
-//    public String conversationName;
     @JsonProperty("_id")
     public Object id;
     @JsonProperty ("name")

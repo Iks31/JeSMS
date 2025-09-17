@@ -26,16 +26,17 @@ public class ClientNetworking {
     }
 
     public void connect(String host, int port) throws IOException {
+        // Sets up input and output streams on socket
         socket = new Socket(host, port);
-
         oos = new ObjectOutputStream(socket.getOutputStream());
         oos.flush();
         ois = new ObjectInputStream(socket.getInputStream());
 
+        // Creation of listener service that listens to server messages
         listenerService = new MessageListenerService(ois);
+        // Handles messages based on the current handler being used
         listenerService.setOnSucceeded(event -> {
             NetworkMessage msg = listenerService.getValue();
-            System.out.println(msg.getContent());
             if (handler != null) {
                 Platform.runLater(() -> handler.onMessage(msg));
             }
@@ -43,6 +44,7 @@ public class ClientNetworking {
             listenerService.restart();
         });
 
+        // Shows error dialog if server connection or listener fails
         listenerService.setOnFailed(event -> {
            System.out.println("Connection failed or error in listener service");
            ClientApp.showErrorDialog(Alert.AlertType.ERROR,"Connection Error", "Server Connection Problem","Connection failed or error in listener service");
@@ -50,9 +52,11 @@ public class ClientNetworking {
             Platform.exit();
             System.exit(0);
         });
+
         listenerService.start();
     }
 
+    // Sends a network message object to the server
     public void sendMessage(NetworkMessage msg) {
         try {
             oos.writeObject(msg);
@@ -62,6 +66,7 @@ public class ClientNetworking {
         }
     }
 
+    // Takes entered credentials and sends them to the server
     public void loginRequest(String username, String password) {
         ArrayList<String> creds = new ArrayList<>();
         creds.add(username);
@@ -70,6 +75,7 @@ public class ClientNetworking {
         sendMessage(new NetworkMessage("LOGIN", creds));
     }
 
+    // Sends registration credentials to the server
     public void registrationRequest(String username, String password) {
         ArrayList<String> creds = new ArrayList<>();
         creds.add(username);
@@ -77,23 +83,27 @@ public class ClientNetworking {
         sendMessage(new NetworkMessage("REGISTER", creds));
     }
 
+    // Requests all conversation data from the server
     public void conversationsRequest() {
         sendMessage(new NetworkMessage("GET_CONVERSATIONS", null));
     }
 
-    //messageRequest sends a message over to the server to send a chat
+    // Requests that a particular message is sent in a chat
     public void messageRequest(ArrayList<Object> conversationData) {
         sendMessage(new NetworkMessage("SEND_CHAT", conversationData));
     }
 
+    // Requests that a conversation is created
     public void createConversationRequest(Conversation conversation) {
         sendMessage(new NetworkMessage("CREATE_CONVERSATION", conversation));
     }
 
+    // Logs out the current user from the current connection
     public void logoutRequest() {
         sendMessage(new NetworkMessage("LOGOUT", null));
     }
 
+    // Closes the current connection between the client and server
     public void close() {
         try {
             if (oos != null) {
@@ -110,11 +120,13 @@ public class ClientNetworking {
             e.printStackTrace();
         }
     }
+
     public String getUsername() {
         return username;
     }
     public void setUsername(String username) { this.username = username; }
 
+    // Listener service continually reads network messages from the input stream
     private static class MessageListenerService extends Service<NetworkMessage> {
         private final ObjectInputStream ois;
 

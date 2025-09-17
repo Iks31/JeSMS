@@ -15,6 +15,7 @@ public class ClientApp extends Application {
     private static ClientNetworking clientNetworking = new ClientNetworking();
     @Override
     public void start(Stage stage) {
+        // Initial connection task
         Task<Void> connectTask = new Task<>() {
             @Override
             protected Void call() throws Exception {
@@ -22,13 +23,13 @@ public class ClientApp extends Application {
                 return null;
             }
         };
-
+        // Shows window and start menu on successful connection
         connectTask.setOnSucceeded(e -> {
             stage.setScene(new StartMenu().getScene(stage));
             stage.setTitle("JeSMS Messaging App");
             stage.show();
         });
-
+        // Shows an error dialog if the server cannot be connected to
         connectTask.setOnFailed(e -> {
             Throwable ex = connectTask.getException();
             showErrorDialog(Alert.AlertType.ERROR,"Connection Error", "Server Connection Problem","Could not connect to server: " + ex.getMessage());
@@ -45,6 +46,7 @@ public class ClientApp extends Application {
         launch();
     }
 
+    // Ensures the client disconnects if the window is closed
     @Override
     public void stop() throws Exception {
         super.stop();
@@ -52,6 +54,7 @@ public class ClientApp extends Application {
         clientNetworking.close();
     }
 
+    // Method for displaying an error popup message
     public static void showErrorDialog(Alert.AlertType type, String title, String headerText, String message) {
         Alert alert = new Alert(type);
         alert.setTitle(title);

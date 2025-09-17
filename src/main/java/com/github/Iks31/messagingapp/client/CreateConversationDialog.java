@@ -22,9 +22,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class CreateConversationDialog extends Stage {
+    // Stores copy of current conversations for checking
     private ObservableList<Conversation> currentConversations;
+    // List view component
     private final ObservableList<String> chatMembers = FXCollections.observableArrayList();
     private final ListView<String> membersList = new ListView<>(chatMembers);
+    // Text fields and buttons
     private final TextField userField = new TextField();
     private final TextField chatNameField = new TextField();
     private final Label statusLabel = new Label();
@@ -38,21 +41,24 @@ public class CreateConversationDialog extends Stage {
     public CreateConversationDialog(ObservableList<Conversation> currentConversations) {
         this.currentConversations = currentConversations;
 
+        // Configures stage
         initModality(Modality.APPLICATION_MODAL);
         setTitle("Create New Conversation");
 
+        // Configures components
         userField.setPromptText("Enter username");
         chatNameField.setPromptText("Enter chat name");
         chatNameField.visibleProperty().bind(Bindings.size(chatMembers).greaterThan(1));
         chatNameField.managedProperty().bind(chatNameField.visibleProperty());
 
+        // Listeners for buttons
         addUserButton.setOnAction(e -> addUser());
         undoButton.setOnAction(e -> undo());
+        createButton.setOnAction(e -> validateAndCreate());
 
         membersList.setPrefHeight(100);
 
-        createButton.setOnAction(e -> validateAndCreate());
-
+        // Root component
         VBox layout = new VBox(10,
                 new Label("Add users:"),
                 new HBox(5, userField, addUserButton, undoButton),
@@ -106,6 +112,8 @@ public class CreateConversationDialog extends Stage {
 
         close();
     }
+
+    // Adds an entered user to the current list view of conversation members
     private void addUser() {
         String user = userField.getText().trim();
         if (user.isEmpty()) {
@@ -121,6 +129,7 @@ public class CreateConversationDialog extends Stage {
         }
     }
 
+    // Removes the most recently added chat member from the list view
     private void undo() {
         if (chatMembers.isEmpty()) {
             return;

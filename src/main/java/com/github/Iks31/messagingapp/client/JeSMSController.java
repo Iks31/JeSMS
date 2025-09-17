@@ -20,7 +20,6 @@ public class JeSMSController {
     private final JeSMSView view;
     ObservableList<Conversation> conversationsList = FXCollections.observableArrayList();
     FilteredList<Conversation> filteredConversations = new FilteredList<>(conversationsList);
-   // private final Conversations conversations;
 
     public JeSMSController(JeSMSView view) {
         this.view = view;
@@ -33,9 +32,6 @@ public class JeSMSController {
             if ("CONVERSATIONS_RECEIVED".equals(msg.getFlag())) {
                 ArrayList<String> conversationsJson = (ArrayList<String>) msg.getContent();
                 Platform.runLater(() -> formatConversations(conversationsJson));
-                //TODO conversation and messages here
-                //  this.conversations = new Conversations();
-                //  this.displayedMessages = new Message();
             } else if ("CONVERSATIONS_NOT_RECEIVED".equals(msg.getFlag())) {
                 //TODO what happens when the conversations have not been retrieved
             } else if ("REALTIME_CHAT".equals(msg.getFlag())) {
@@ -70,8 +66,10 @@ public class JeSMSController {
         if (selectedConversation == null) {
             return;
         }
+
         String currName = selectedConversation.name;
         List<String> currUsers = selectedConversation.users;
+
         if (currName.isEmpty()) {
             if (currUsers.getFirst().equals(ClientApp.getClientNetworking().getUsername())) {
                 view.getCurrConversationLabel().setText(currUsers.getLast());
@@ -82,7 +80,6 @@ public class JeSMSController {
             view.getCurrConversationLabel().setText(currName);
         }
 
-        // Load Messages
         ObservableList<ChatMessage> messages = FXCollections.observableArrayList(selectedConversation.messages);
         view.getCurrMessagesList().setItems(messages);
         view.getCurrMessagesList().scrollTo(messages.size() - 1);
@@ -107,6 +104,7 @@ public class JeSMSController {
     public void formatConversations(ArrayList<String> jsons) {
         ObjectMapper mapper = new ObjectMapper();
         conversationsList.clear();
+
         Conversation currConversation;
         for (String json : jsons) {
             try{
@@ -116,6 +114,7 @@ public class JeSMSController {
                 e.printStackTrace();
             }
         }
+
         sortConversations();
         view.getConversationsList().setItems(filteredConversations);
     }
@@ -192,18 +191,19 @@ public class JeSMSController {
             if (c1.messages.isEmpty()) return 1;
             if (c2.messages.isEmpty()) return -1;
 
-            // Compare most recent timestamps (newest first)
+            // Compare most recent timestamps - newest first
             return c2.messages.getLast().getTimestampInstant()
                     .compareTo(c1.messages.getLast().getTimestampInstant());
         });
     }
 
+    // Toggles the filtering property
     public void toggleFilter() {
         view.isFilteringUsersProperty().set(!view.isFilteringUsersProperty().get());
     }
 
+    // Sends logout request
     public void logout() {
-        // Send logout request
         ClientApp.getClientNetworking().logoutRequest();
     }
 }
