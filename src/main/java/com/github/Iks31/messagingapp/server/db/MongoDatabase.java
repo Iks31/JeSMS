@@ -148,7 +148,7 @@ public class MongoDatabase {
         }
     }
 
-    public DBResult<String> editMessage(ArrayList<String> users, ChatMessage message, String content) {
+    public DBResult<String> editMessage(ArrayList<String> users, ChatMessage message) {
         try{
             MongoCollection<Document> collection = Collection("conversations");
 
@@ -156,7 +156,7 @@ public class MongoDatabase {
             Bson filter = Filters.all("users", users);
 
             // Update: push username into readBy for the matched message
-            Bson update = Updates.set("messages.$[msg].content", content);
+            Bson update = Updates.set("messages.$[msg].content", message.content);
             Bson update2 = Updates.set("messages.$[msg].edited", true);
 
             // Array filter: find the correct message by timestamp
@@ -187,12 +187,15 @@ public class MongoDatabase {
             System.out.println(message.getTimestampInstant().toEpochMilli());
             Bson filter = Filters.all("users", users);
 
+            Bson update = Updates.set("messages.$[msg].isDeleted", true);
             // Pull message with given timestamp from messages array
-            Bson update = Updates.pull("messages",
+            List<Bson> arrayFilters = Arrays.asList(
                     Filters.and(eq("msg.timestamp", message.getTimestampInstant().toEpochMilli()),
-                            eq("msg.sender", message.sender)));
+                            eq("msg.sender", message.sender))
+            );
 
-            UpdateResult result = collection.updateOne(filter, update);
+            UpdateOptions options = new UpdateOptions().arrayFilters(arrayFilters);
+            UpdateResult result = collection.updateOne(filter, update, options);
 
             if (result.getModifiedCount() == 0) {
                 return new DBResult<>(false, "No message was deleted. Check filters.");

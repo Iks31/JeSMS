@@ -214,17 +214,28 @@ public class Server implements Runnable {
 
         public void serveEditMessageRequest(ArrayList<Object> chatContent) {
             System.out.println("[EDIT MESSAGE] " + address + " edited a chat");
-            String groupName = chatContent.get(0).toString();
-            ArrayList<String> users = (ArrayList<String>) chatContent.get(1);
-            ChatMessage message = (ChatMessage)chatContent.get(2);
-            String sender = message.sender;
+            ArrayList<String> users = (ArrayList<String>) chatContent.get(0);
+            ChatMessage message = (ChatMessage)chatContent.get(1);
             if (realTime(users)) {
-                //TODO
+                realTimeEditChat(users,message);
+            }
+            else{
+                regularEditChat(users,message);
             }
 
         }
 
-        public void serveDeleteMessageRequest(ArrayList<Object> chatContent) {}
+        public void serveDeleteMessageRequest(ArrayList<Object> chatContent) {
+            System.out.println("[DELETE MESSAGE] " + address + " deleted a chat");
+            ArrayList<String> users = (ArrayList<String>) chatContent.get(0);
+            ChatMessage message = (ChatMessage)chatContent.get(1);
+            if (realTime(users)) {
+                realTimeDeleteChat(users,message);
+            }
+            else{
+                regularDeleteChat(users,message);
+            }
+        }
 
         public boolean realTime(ArrayList<String> users){
             boolean realtime = false;
@@ -257,11 +268,64 @@ public class Server implements Runnable {
             }
         }
 
-        //TODO yet to implement
-        public void realTimeEditChat() {}
-        public void regularEditChat(){}
-        public void realTimeDeleteChat(){}
-        public void regularDeleteChat(){}
+        //SENDS THE LATEST MESSAGE, THE CONTENT NOR THE ISDELETED TAG GETS CHECKED
+        // AGAINST THE DATABASE JUST THE SENDER AND TIMESTAMP
+        public void regularEditChat(ArrayList<String> users, ChatMessage message) {
+            DBResult<String> log = db.editMessage(users,message);
+            if(log.isSuccess()){
+                sendMessage(new NetworkMessage("REGULAR_EDIT_SUCCESS", log.getMessage()));
+            }else{
+                sendMessage(new NetworkMessage("REGULAR_EDIT_FAIL", log.getMessage()));
+            }
+        }
+        public void realTimeEditChat(ArrayList<String> users, ChatMessage message) {
+            DBResult<String> log = db.editMessage(users,message);
+            if(log.isSuccess()){
+                ArrayList<Object> networkMessage = new ArrayList<>();
+                networkMessage.add(message);
+                networkMessage.add(users);
+                for(String u : users){
+                    if(u.equals(username)){
+                        continue;
+                    }
+                    else if(loggedInConnections.containsKey(u)){
+                        loggedInConnections.get(u).sendMessage(new NetworkMessage("REALTIME_EDIT",networkMessage));
+                    }
+                }
+                sendMessage(new NetworkMessage<>("REALTIME_EDIT_SUCCESS",log.getMessage()));
+            }
+            else{
+                sendMessage(new NetworkMessage("REALTIME_EDIT_FAIL", log.getMessage()));
+            }
+        }
+        public void realTimeDeleteChat(ArrayList<String> users, ChatMessage message){
+            DBResult<String> log = db.deleteMessage(users,message);
+            if(log.isSuccess()){
+                ArrayList<Object> networkMessage = new ArrayList<>();
+                networkMessage.add(message);
+                networkMessage.add(users);
+                for(String u : users){
+                    if(u.equals(username)){
+                        continue;
+                    }
+                    else if(loggedInConnections.containsKey(u)){
+                        loggedInConnections.get(u).sendMessage(new NetworkMessage("REALTIME_EDIT",networkMessage));
+                    }
+                }
+                sendMessage(new NetworkMessage<>("REALTIME_EDIT_SUCCESS",log.getMessage()));
+            }
+            else{
+                sendMessage(new NetworkMessage("REALTIME_EDIT_FAIL", log.getMessage()));
+            }
+        }
+        public void regularDeleteChat(ArrayList<String> users, ChatMessage message){
+            DBResult<String> log = db.deleteMessage(users,message);
+            if(log.isSuccess()){
+                sendMessage(new NetworkMessage("REGULAR_DELETE_SUCCESS", log.getMessage()));
+            }else{
+                sendMessage(new NetworkMessage("REGULAR_DELETE_FAIL", log.getMessage()));
+            }
+        }
 
         public void realtimeChat(ChatMessage message, String sender, ArrayList<String> users) {
             DBResult<String> log = db.newMessage(message.content,sender,users);
