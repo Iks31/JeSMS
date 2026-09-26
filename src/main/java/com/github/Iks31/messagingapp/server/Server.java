@@ -1,6 +1,7 @@
 package com.github.Iks31.messagingapp.server;
 
 import com.github.Iks31.messagingapp.common.ChatMessage;
+import com.github.Iks31.messagingapp.common.Config;
 import com.github.Iks31.messagingapp.common.Conversation;
 import com.github.Iks31.messagingapp.common.NetworkMessage;
 import com.github.Iks31.messagingapp.common.Protocol;
@@ -451,11 +452,14 @@ public class Server implements Runnable {
     }
 
     // Usage: Server [--port N] [--in-memory | --mongo-uri URI] [--db NAME]
-    // Environment variables JESMS_PORT, JESMS_MONGO_URI and JESMS_DB_NAME are used as defaults.
+    // JESMS_PORT, JESMS_MONGO_URI and JESMS_DB_NAME from the environment or a .env file are used as defaults.
     public static void main(String[] args) throws IOException {
-        int port = Integer.parseInt(Objects.requireNonNullElse(System.getenv("JESMS_PORT"), String.valueOf(DEFAULT_PORT)));
-        String mongoUri = Objects.requireNonNullElse(System.getenv("JESMS_MONGO_URI"), "mongodb://localhost:27017");
-        String dbName = Objects.requireNonNullElse(System.getenv("JESMS_DB_NAME"), "JeSMS");
+        if (Config.hasEnvFile()) {
+            System.out.println("[CONFIG] Loaded settings from " + Config.ENV_FILE.toAbsolutePath());
+        }
+        int port = Config.getInt("JESMS_PORT", DEFAULT_PORT);
+        String mongoUri = Config.get("JESMS_MONGO_URI", "mongodb://localhost:27017");
+        String dbName = Config.get("JESMS_DB_NAME", "JeSMS");
         boolean inMemory = false;
 
         for (int i = 0; i < args.length; i++) {
@@ -482,7 +486,7 @@ public class Server implements Runnable {
                 System.out.println("[DATABASE] Connected to MongoDB database '" + dbName + "'");
             } catch (RuntimeException e) {
                 System.err.println("[DATABASE] Could not connect to MongoDB: " + e.getMessage());
-                System.err.println("Set JESMS_MONGO_URI, pass --mongo-uri, or use --in-memory.");
+                System.err.println("Set JESMS_MONGO_URI in .env (see .env.example), pass --mongo-uri, or use --in-memory.");
                 System.exit(1);
                 return;
             }
