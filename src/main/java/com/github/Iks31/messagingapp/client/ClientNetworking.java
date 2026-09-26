@@ -3,26 +3,34 @@ package com.github.Iks31.messagingapp.client;
 import com.github.Iks31.messagingapp.common.ChatMessage;
 import com.github.Iks31.messagingapp.common.Conversation;
 import com.github.Iks31.messagingapp.common.NetworkMessage;
-import javafx.concurrent.Service;
-import javafx.concurrent.Task;
+import com.github.Iks31.messagingapp.common.Protocol;
+import com.github.Iks31.messagingapp.common.Protocol.ChatRequest;
+import com.github.Iks31.messagingapp.common.Protocol.Credentials;
+import com.github.Iks31.messagingapp.common.Protocol.MemberRequest;
+import com.github.Iks31.messagingapp.common.Protocol.PasswordChange;
 import javafx.application.Platform;
-import javafx.scene.control.Alert;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
 
 public class ClientNetworking {
     private Socket socket;
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
+    private volatile boolean closing;
 
-    private MessageListenerService listenerService;
-    private MessageHandler handler;
+    private volatile MessageHandler handler;
+    private Runnable onConnectionLost;
     private String username;
+    private volatile String serverWelcome;
 
     public void setMessageHandler(MessageHandler handler) {
         this.handler = handler;
+    }
+
+    // Called on the JavaFX thread if the connection to the server drops unexpectedly
+    public void setOnConnectionLost(Runnable onConnectionLost) {
+        this.onConnectionLost = onConnectionLost;
     }
 
     public void connect(String host, int port) throws IOException {
@@ -32,34 +40,41 @@ public class ClientNetworking {
         oos.flush();
         ois = new ObjectInputStream(socket.getInputStream());
 
-        // Creation of listener service that listens to server messages
-        listenerService = new MessageListenerService(ois);
-        // Handles messages based on the current handler being used
-        listenerService.setOnSucceeded(event -> {
-            NetworkMessage msg = listenerService.getValue();
-            if (handler != null) {
-                Platform.runLater(() -> handler.onMessage(msg));
+        // Listener thread that continually reads server messages and passes them to the current handler
+        Thread listener = new Thread(this::listen, "server-listener");
+        listener.setDaemon(true);
+        listener.start();
+    }
+
+    private void listen() {
+        try {
+            while (true) {
+                NetworkMessage<?> msg = (NetworkMessage<?>) ois.readObject();
+                // Remembered so it can be shown even if it arrives before a handler is set
+                if (Protocol.INIT_SUCCESS.equals(msg.getFlag())) {
+                    serverWelcome = (String) msg.getContent();
+                }
+                Platform.runLater(() -> {
+                    MessageHandler current = handler;
+                    if (current != null) current.onMessage(msg);
+                });
             }
-
-            listenerService.restart();
-        });
-
-        // Shows error dialog if server connection or listener fails
-        listenerService.setOnFailed(event -> {
-           System.out.println("Connection failed or error in listener service");
-           ClientApp.showErrorDialog(Alert.AlertType.ERROR,"Connection Error", "Server Connection Problem","Connection failed or error in listener service");
-           event.getSource().getException().printStackTrace();
-            Platform.exit();
-            System.exit(0);
-        });
-
-        listenerService.start();
+        } catch (IOException | ClassNotFoundException | ClassCastException e) {
+            if (!closing) {
+                System.out.println("Connection to the server was lost: " + e.getMessage());
+                Platform.runLater(() -> {
+                    if (onConnectionLost != null) onConnectionLost.run();
+                });
+            }
+        }
     }
 
     // Sends a network message object to the server
-    public void sendMessage(NetworkMessage msg) {
+    public synchronized void sendMessage(NetworkMessage<?> msg) {
         try {
             oos.writeObject(msg);
+            // Prevents the stream from caching objects so later changes are always sent
+            oos.reset();
             oos.flush();
         } catch (IOException e) {
             e.printStackTrace();
@@ -68,50 +83,66 @@ public class ClientNetworking {
 
     // Takes entered credentials and sends them to the server
     public void loginRequest(String username, String password) {
-        ArrayList<String> creds = new ArrayList<>();
-        creds.add(username);
-        creds.add(password);
-        this.username = username;
-        sendMessage(new NetworkMessage("LOGIN", creds));
+        sendMessage(new NetworkMessage<>(Protocol.LOGIN, new Credentials(username, password)));
     }
 
     // Sends registration credentials to the server
     public void registrationRequest(String username, String password) {
-        ArrayList<String> creds = new ArrayList<>();
-        creds.add(username);
-        creds.add(password);
-        sendMessage(new NetworkMessage("REGISTER", creds));
+        sendMessage(new NetworkMessage<>(Protocol.REGISTER, new Credentials(username, password)));
+    }
+
+    public void changePasswordRequest(String oldPassword, String newPassword) {
+        sendMessage(new NetworkMessage<>(Protocol.CHANGE_PASSWORD, new PasswordChange(oldPassword, newPassword)));
     }
 
     // Requests all conversation data from the server
     public void conversationsRequest() {
-        sendMessage(new NetworkMessage("GET_CONVERSATIONS", null));
+        sendMessage(new NetworkMessage<>(Protocol.GET_CONVERSATIONS, null));
     }
 
-    // Requests that a particular message is sent in a chat
-    public void messageRequest(ArrayList<Object> conversationData) {
-        sendMessage(new NetworkMessage("SEND_CHAT", conversationData));
+    // Requests that a message is sent in a conversation
+    public void messageRequest(String conversationId, ChatMessage message) {
+        sendMessage(new NetworkMessage<>(Protocol.SEND_CHAT, new ChatRequest(conversationId, message)));
+    }
+
+    // Requests that a message's content is replaced with the content of the given message
+    public void editMessageRequest(String conversationId, ChatMessage message) {
+        sendMessage(new NetworkMessage<>(Protocol.EDIT_CHAT, new ChatRequest(conversationId, message)));
+    }
+
+    public void deleteMessageRequest(String conversationId, ChatMessage message) {
+        sendMessage(new NetworkMessage<>(Protocol.DELETE_CHAT, new ChatRequest(conversationId, message)));
+    }
+
+    // Marks every message in the conversation as read by the current user
+    public void readConversationRequest(String conversationId) {
+        sendMessage(new NetworkMessage<>(Protocol.READ_CONVERSATION, conversationId));
     }
 
     // Requests that a conversation is created
     public void createConversationRequest(Conversation conversation) {
-        sendMessage(new NetworkMessage("CREATE_CONVERSATION", conversation));
+        sendMessage(new NetworkMessage<>(Protocol.CREATE_CONVERSATION, conversation));
+    }
+
+    public void addMemberRequest(String conversationId, String user) {
+        sendMessage(new NetworkMessage<>(Protocol.ADD_MEMBER, new MemberRequest(conversationId, user)));
+    }
+
+    public void leaveConversationRequest(String conversationId) {
+        sendMessage(new NetworkMessage<>(Protocol.LEAVE_CONVERSATION, conversationId));
     }
 
     // Logs out the current user from the current connection
     public void logoutRequest() {
-        sendMessage(new NetworkMessage("LOGOUT", null));
+        sendMessage(new NetworkMessage<>(Protocol.LOGOUT, null));
     }
 
     // Closes the current connection between the client and server
     public void close() {
+        closing = true;
         try {
             if (oos != null) {
-                oos.writeObject(new NetworkMessage("DISCONNECT", "Client shutting down"));
-                oos.flush();
-            }
-            if (listenerService != null) {
-                listenerService.cancel();
+                sendMessage(new NetworkMessage<>(Protocol.DISCONNECT, "Client shutting down"));
             }
             if (socket != null && !socket.isClosed()) {
                 socket.close();
@@ -124,25 +155,8 @@ public class ClientNetworking {
     public String getUsername() {
         return username;
     }
+
     public void setUsername(String username) { this.username = username; }
 
-    // Listener service continually reads network messages from the input stream
-    private static class MessageListenerService extends Service<NetworkMessage> {
-        private final ObjectInputStream ois;
-
-        public MessageListenerService(ObjectInputStream ois) {
-            this.ois = ois;
-        }
-
-        @Override
-        protected Task<NetworkMessage> createTask() {
-            return new Task<NetworkMessage>() {
-                protected NetworkMessage call() throws Exception {
-                    return (NetworkMessage) ois.readObject();
-                }
-            };
-        }
-    }
-
-
+    public String getServerWelcome() { return serverWelcome; }
 }

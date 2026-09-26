@@ -3,37 +3,25 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>JeSMS</groupId>
   <artifactId>JeSMS</artifactId>
-  <packaging>war</packaging>
+  <packaging>jar</packaging>
   <version>1.0-SNAPSHOT</version>
-  <name>JeSMS Maven Webapp</name>
-  <url>http://maven.apache.org</url>
+  <name>JeSMS</name>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven-compiler-plugin.source>21</maven-compiler-plugin.source>
-    <maven-compiler-plugin.target>21</maven-compiler-plugin.target>
+    <maven.compiler.release>21</maven.compiler.release>
     <maven-compiler-plugin.version>3.12.1</maven-compiler-plugin.version>
     <mongodb-driver-sync.version>5.0.0</mongodb-driver-sync.version>
-    <mongodb-crypt.version>1.8.0</mongodb-crypt.version>
-    <!-- Keeping 1.2.13 until mongodb-crypt makes slf4j-api an optional dependency -->
-    <!-- https://jira.mongodb.org/browse/MONGOCRYPT-602 -->
-    <logback-classic.version>1.2.13</logback-classic.version>
+    <javafx.version>21.0.2</javafx.version>
+    <junit.version>5.10.2</junit.version>
     <exec-maven-plugin.version>3.1.1</exec-maven-plugin.version>
+    <!-- Arguments passed to the client by javafx:run -->
+    <javafx.args></javafx.args>
   </properties>
   <dependencies>
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>2.19.2</version>
-    </dependency>
-    <dependency>
-      <groupId>org.mongodb</groupId>
-      <artifactId>mongo-java-driver</artifactId>
-      <version>3.12.14</version>
-    </dependency>
-    <dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-controls</artifactId>
-      <version>21.0.2</version>
+      <version>${javafx.version}</version>
     </dependency>
     <dependency>
       <groupId>org.mongodb</groupId>
@@ -41,53 +29,45 @@
       <version>${mongodb-driver-sync.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-annotations</artifactId>
-      <version>2.19.2</version>
-    </dependency>
-    <dependency>
-      <groupId>org.mongodb</groupId>
-      <artifactId>mongodb-crypt</artifactId>
-      <version>${mongodb-crypt.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
   <build>
     <plugins>
       <plugin>
+        <!-- Client: mvn javafx:run (see README for passing host and port) -->
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-maven-plugin</artifactId>
         <version>0.0.8</version>
         <configuration>
           <mainClass>com.github.Iks31.messagingapp.client.ClientApp</mainClass>
+          <commandlineArgs>${javafx.args}</commandlineArgs>
         </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${maven-compiler-plugin.version}</version>
-        <configuration>
-          <source>${maven-compiler-plugin.source}</source>
-          <target>${maven-compiler-plugin.target}</target>
-        </configuration>
       </plugin>
       <plugin>
-        <!-- Adding this plugin, so we don't need to add -Dexec.cleanupDaemonThreads=false in the mvn cmd line -->
-        <!-- to avoid the IllegalThreadStateException when running with Maven -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
+      </plugin>
+      <plugin>
+        <!-- Server: mvn compile exec:java (see README for options) -->
+        <!-- cleanupDaemonThreads avoids the IllegalThreadStateException when running with Maven -->
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <version>${exec-maven-plugin.version}</version>
         <configuration>
+          <mainClass>com.github.Iks31.messagingapp.server.Server</mainClass>
           <cleanupDaemonThreads>false</cleanupDaemonThreads>
         </configuration>
       </plugin>
     </plugins>
   </build>
-
-
 </project>
