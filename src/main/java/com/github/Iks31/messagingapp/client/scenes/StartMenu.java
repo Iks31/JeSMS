@@ -3,7 +3,7 @@ package com.github.Iks31.messagingapp.client.scenes;
 import com.github.Iks31.messagingapp.client.ClientApp;
 import com.github.Iks31.messagingapp.client.UI;
 import com.github.Iks31.messagingapp.client.ui_components.TextButton;
-import javafx.application.Platform;
+import com.github.Iks31.messagingapp.common.Protocol;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -13,7 +13,9 @@ import javafx.stage.Stage;
 public class StartMenu implements UI {
     @Override
     public Scene getScene(Stage stage) {
-        VBox vbox = new VBox(10, new Label("Welcome to JeSMS!"));
+        Label titleLabel = new Label("Welcome to JeSMS!");
+        titleLabel.getStyleClass().add("header");
+        VBox vbox = new VBox(10, titleLabel);
 
         // Initial navigation buttons
         TextButton loginBtn = new TextButton("Login", "button-primary");
@@ -24,7 +26,8 @@ public class StartMenu implements UI {
         aboutBtn.setOnAction(e -> {stage.setScene(new AboutScreen().getScene(stage));});
 
         // Displays server connection status
-        Label serverConnectionStatus = new Label("");
+        String welcome = ClientApp.getClientNetworking().getServerWelcome();
+        Label serverConnectionStatus = new Label(welcome == null ? "" : welcome);
 
         // Root component
         vbox.getChildren().addAll(loginBtn, registerBtn, aboutBtn, serverConnectionStatus);
@@ -36,8 +39,8 @@ public class StartMenu implements UI {
 
         // Handles initial connection to the server
         ClientApp.getClientNetworking().setMessageHandler(message -> {
-            if ("INIT_SUCCESS".equals(message.getFlag())) {
-                Platform.runLater(() -> {serverConnectionStatus.setText((String) message.getContent());});
+            if (Protocol.INIT_SUCCESS.equals(message.getFlag())) {
+                serverConnectionStatus.setText((String) message.getContent());
             }
         });
 

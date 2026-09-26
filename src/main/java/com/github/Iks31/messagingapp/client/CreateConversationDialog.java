@@ -2,6 +2,7 @@ package com.github.Iks31.messagingapp.client;
 
 import com.github.Iks31.messagingapp.client.ui_components.IconButton;
 import com.github.Iks31.messagingapp.common.Conversation;
+import com.github.Iks31.messagingapp.common.Protocol;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -11,6 +12,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
@@ -53,6 +55,10 @@ public class CreateConversationDialog extends Stage {
 
         // Listeners for buttons
         addUserButton.setOnAction(e -> addUser());
+        userField.setOnAction(e -> addUser());
+        addUserButton.setTooltip(new Tooltip("Add user"));
+        undoButton.setTooltip(new Tooltip("Remove last user"));
+        statusLabel.setWrapText(true);
         undoButton.setOnAction(e -> undo());
         createButton.setOnAction(e -> validateAndCreate());
 
@@ -69,7 +75,7 @@ public class CreateConversationDialog extends Stage {
         );
         layout.setPadding(new Insets(10));
 
-        Scene scene = new Scene(layout, 300, 300);
+        Scene scene = new Scene(layout, 340, 340);
         scene.getStylesheets().add("style.css");
         setScene(scene);
     }
@@ -95,6 +101,10 @@ public class CreateConversationDialog extends Stage {
         // Require a chat name if group (more than 2 users including self)
         if (users.size() > 2 && chatNameField.getText().trim().isEmpty()) {
             statusLabel.setText("Enter a chat name for group chats.");
+            return;
+        }
+        if (chatNameField.getText().trim().length() > Protocol.MAX_CONVERSATION_NAME_LENGTH) {
+            statusLabel.setText("Chat names can be at most " + Protocol.MAX_CONVERSATION_NAME_LENGTH + " characters.");
             return;
         }
 
@@ -131,9 +141,7 @@ public class CreateConversationDialog extends Stage {
 
     // Removes the most recently added chat member from the list view
     private void undo() {
-        if (chatMembers.isEmpty()) {
-            return;
-        } else {
+        if (!chatMembers.isEmpty()) {
             chatMembers.removeLast();
         }
     }

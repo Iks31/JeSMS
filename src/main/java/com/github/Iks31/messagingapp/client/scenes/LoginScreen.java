@@ -4,7 +4,7 @@ import com.github.Iks31.messagingapp.client.*;
 import com.github.Iks31.messagingapp.client.ui_components.BackButton;
 import com.github.Iks31.messagingapp.client.ui_components.ClearButton;
 import com.github.Iks31.messagingapp.client.ui_components.TextButton;
-import javafx.application.Platform;
+import com.github.Iks31.messagingapp.common.Protocol;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -17,12 +17,11 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class LoginScreen implements UI {
-    // TODO change scope of components?
-    // TODO bindings to disable buttons based on text field contents
     private final Label statusLabel = new Label("");
     @Override
     public Scene getScene(Stage stage) {
         Label titleLabel = new Label("Login");
+        titleLabel.getStyleClass().add("header");
 
         // Grid layout for UI
         GridPane grid = new GridPane();
@@ -45,7 +44,9 @@ public class LoginScreen implements UI {
 
         // UI buttons
         TextButton submitBtn = new TextButton("Submit", "button-primary");
-        submitBtn.setOnAction(e -> loginVerification(usernameField.getText(), passwordField.getText()));
+        submitBtn.setOnAction(e -> loginVerification(usernameField.getText().trim(), passwordField.getText()));
+        submitBtn.setDefaultButton(true);
+        submitBtn.disableProperty().bind(usernameField.textProperty().isEmpty().or(passwordField.textProperty().isEmpty()));
         ClearButton clrBtn = new ClearButton(usernameField, passwordField);
         HBox btnBox = new HBox(15, submitBtn, clrBtn);
         btnBox.setAlignment(Pos.CENTER);
@@ -64,18 +65,17 @@ public class LoginScreen implements UI {
 
         // Handling login relevant messages from the server
         ClientApp.getClientNetworking().setMessageHandler(msg -> {
-            if ("LOGIN_SUCCESS".equals(msg.getFlag())) {
-                Platform.runLater(() -> showJeSMS(stage));
-            } else if ("LOGIN_FAIL".equals(msg.getFlag())) {
-                Platform.runLater(() -> {
-                    updateStatus((String) msg.getContent());
-                    clrBtn.fire();
-                });
+            if (Protocol.LOGIN_SUCCESS.equals(msg.getFlag())) {
+                ClientApp.getClientNetworking().setUsername((String) msg.getContent());
+                showJeSMS(stage);
+            } else if (Protocol.LOGIN_FAIL.equals(msg.getFlag()) || Protocol.REQUEST_FAIL.equals(msg.getFlag())) {
+                updateStatus((String) msg.getContent());
+                passwordField.clear();
             }
         });
 
         // Creating and returning the scene
-        Scene scene = new Scene(layout, 600, 400);
+        Scene scene = new Scene(layout, DEFAULT_WIDTH, DEFAULT_HEIGHT);
         scene.getStylesheets().add("style.css");
         return scene;
     }

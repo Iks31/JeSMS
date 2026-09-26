@@ -321,3 +321,89 @@
     -fx-text-fill: #26c485;
     -fx-font-weight: bold;
 }
+/* ============================
+   Text Fields
+   ============================ */
+
+.text-field, .password-field {
+    -fx-background-color: #474350;
+    -fx-text-fill: #ffffff;
+    -fx-prompt-text-fill: #9a9a9a;
+    -fx-highlight-fill: #26c485;
+    -fx-background-radius: 6;
+    -fx-padding: 5 8;
+}
+
+.text-field:focused, .password-field:focused {
+    -fx-border-color: #26c485;
+    -fx-border-radius: 6;
+}
+
+/* ============================
+   Conversation header & extras
+   ============================ */
+
+.conversation-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #a3e7fc;
+}
+
+.conversation-members {
+    -fx-font-size: 11px;
+    -fx-text-fill: #9a9a9a;
+}
+
+.unread-badge {
+    -fx-background-color: #26c485;
+    -fx-background-radius: 10;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 1 6;
+}
+
+.list-cell:filled:selected .unread-badge {
+    -fx-background-color: #333333;
+}
+
+.list-cell:filled:selected .conversation-preview,
+.list-cell:filled:selected .conversation-time,
+.list-cell:filled:selected .conversation-name {
+    -fx-text-fill: white;
+}
+
+.message-deleted {
+    -fx-font-style: italic;
+    -fx-opacity: 0.7;
+}
+
+/* Message cells should not highlight like a normal list */
+.messages-list .list-cell:hover,
+.messages-list .list-cell:filled:selected,
+.messages-list .list-cell:filled:selected:hover {
+    -fx-background-color: transparent;
+    -fx-cursor: default;
+}
+
+.messages-list {
+    -fx-background-color: #1e1e1e;
+    -fx-control-inner-background: #1e1e1e;
+}
+
+/* ============================
+   Dialogs
+   ============================ */
+
+.dialog-pane {
+    -fx-background-color: #333333;
+}
+
+.dialog-pane .header-panel {
+    -fx-background-color: #2b2b2b;
+}
+
+.dialog-pane .header-panel .label,
+.dialog-pane .content.label {
+    -fx-text-fill: #a3e7fc;
+}

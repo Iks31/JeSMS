@@ -37,4 +37,4 @@ build/
 ### Mac OS ###
 .DS_Store
 
-### Env for MongoDB Password ###
+### Env for MongoDB Password ###.env

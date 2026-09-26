@@ -1,355 +1,195 @@
 package com.github.Iks31.messagingapp.server.db;
 
 import com.github.Iks31.messagingapp.common.ChatMessage;
-import com.mongodb.client.*;
+import com.github.Iks31.messagingapp.common.Conversation;
+import com.mongodb.ErrorCategory;
+import com.mongodb.MongoException;
+import com.mongodb.MongoWriteException;
 import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
+import com.mongodb.client.result.UpdateResult;
+import org.bson.Document;
+import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
 
-
-import java.time.Instant;
 import java.util.*;
 
 import static com.mongodb.client.model.Filters.eq;
 
-import com.mongodb.client.result.UpdateResult;
-import org.bson.Document;
-import org.bson.conversions.Bson;
+// MongoDB backed storage.
+// Collections:
+//   users:         { user, password }
+//   conversations: { name, users: [..], messages: [{ content, sender, timestamp, readBy, edited, isDeleted }] }
+public class MongoDatabase implements Database {
+    private final MongoClient mongoClient;
+    private final MongoCollection<Document> users;
+    private final MongoCollection<Document> conversations;
 
-import java.util.ArrayList;
-
-public class MongoDatabase {
-    static String uri = "mongodb+srv://ikerdz3101:<dbpassword>@jesmscluster0.9ownp4i.mongodb.net/?retryWrites=true&w=majority&appName=JeSMScluster0";
-    static com.mongodb.client.MongoDatabase db;
-    private static MongoClient mongoClient;
-
-    public MongoDatabase() {
-        connect();
-    }
-
-    public void connect() {
+    public MongoDatabase(String uri, String databaseName) {
+        mongoClient = MongoClients.create(uri);
+        com.mongodb.client.MongoDatabase db = mongoClient.getDatabase(databaseName);
+        // Fails fast if the database cannot be reached
+        db.runCommand(new Document("ping", 1));
+        users = db.getCollection("users");
+        conversations = db.getCollection("conversations");
         try {
-            mongoClient = MongoClients.create(uri);
-            System.out.println("✅ Connected to MongoDB!");
-            db = mongoClient.getDatabase("JeSMS");
-        } catch (Exception e) {
-            System.err.println("❌ Connection failed");}
+            // Guarantees usernames are unique even if two registrations race
+            users.createIndex(Indexes.ascending("user"), new IndexOptions().unique(true));
+        } catch (MongoException e) {
+            System.err.println("[DATABASE] Could not create unique username index (duplicate usernames exist?): " + e.getMessage());
+        }
     }
 
-    public MongoCollection<Document> Collection(
-            String collectionName) {
+    @Override
+    public boolean userExists(String username) {
+        return users.find(eq("user", username)).first() != null;
+    }
 
+    @Override
+    public String getPasswordHash(String username) {
+        Document user = users.find(eq("user", username)).first();
+        return user == null ? null : user.getString("password");
+    }
+
+    @Override
+    public synchronized boolean createUser(String username, String passwordHash) {
+        if (userExists(username)) {
+            return false;
+        }
         try {
-            if (db == null) {
-                connect();
-            }
-            return db.getCollection(collectionName);
-            // establishConnections() Code
-
-        }catch (Exception e) {
-           System.err.println("failed");
-           return null;
-        }
-    }
-
-    public DBResult<String> getConversations(String username) {
-        try {
-            if (db == null) {
-                connect();
-            }
-            MongoCollection<Document> collection = Collection("conversations");
-            ArrayList<Document> conversations = new ArrayList<>();
-
-            FindIterable<Document> iterable = collection.find(eq("users", username));
-            MongoCursor<Document> mongoCursor = iterable.iterator();
-            ArrayList<String> list = new ArrayList<>();
-            while (mongoCursor.hasNext()) {
-                list.add(mongoCursor.next().toJson());
-            }
-            return new DBResult<>(true, "successfully retrieved conversations",list);
-        } catch (Exception e) {
-            return new DBResult<>(false,e);
-        }
-
-    }
-
-    public DBResult<String> login(String username) {
-        try{
-            if (db == null) {
-                connect();
-            }
-
-            MongoCollection<Document> collection = Collection("users");
-            Document user = collection.find(eq("user", username)).first();
-            if(user == null){
-                return new DBResult<>(false, "User(s) does not exist");
-            }
-            else{
-                ArrayList<String> credentials = new ArrayList<>();
-                credentials.add(user.getString("user"));
-                credentials.add(user.getString("password"));
-
-                return new DBResult<>(true, "successfully retrieved credentials",credentials);
-            }
-        } catch (Exception e) {
-            return new DBResult<>(false,e);
-        }
-    }
-
-    public  DBResult<String> newMessage(String content, String username, ArrayList<String> users)
-    {
-        try{
-            if (db == null) {
-                connect();
-            }
-            MongoCollection<Document> collection = Collection("conversations");
-            long date = Instant.now().toEpochMilli();
-            Bson update = new Document("content", content)
-                            .append("sender", username)
-                            .append("timestamp", date)
-                            .append("readBy", new ArrayList<String>())
-                            .append("edited", false)
-                            .append("isDeleted", false);
-            collection.updateOne(eq("users",users), Updates.addToSet("messages", update));
-            return new DBResult<>(true, "successfully sent message");
-        } catch (Exception e) {
-            return new DBResult<>(false,e);
-        }
-    }
-
-    public DBResult<String> readByUser(ArrayList<String> users, String username, ChatMessage message) {
-        try{
-            MongoCollection<Document> collection = Collection("conversations");
-
-            System.out.println(message.getTimestampInstant().toEpochMilli());
-            Bson filter = Filters.all("users", users);
-
-            // Update: push username into readBy for the matched message
-            Bson update = Updates.addToSet("messages.$[msg].readBy", username);
-
-            // Array filter: find the correct message by timestamp
-            List<Bson> arrayFilters = Arrays.asList(
-                    Filters.and(eq("msg.timestamp", message.getTimestampInstant().toEpochMilli()),
-                            eq("msg.sender", message.sender))
-            );
-
-            UpdateOptions options = new UpdateOptions().arrayFilters(arrayFilters);
-
-            UpdateResult result = collection.updateOne(filter, update, options);
-
-            if (result.getModifiedCount() == 0) {
-                return new DBResult<>(false, "No document was updated. Check filters.");
-            }
-
-            return new DBResult<>(true, "successfully read message");
-        } catch (Exception e) {
-            return new DBResult<>(false,e);
-        }
-    }
-
-    public DBResult<String> editMessage(ArrayList<String> users, ChatMessage message) {
-        try{
-            MongoCollection<Document> collection = Collection("conversations");
-
-            System.out.println(message.getTimestampInstant().toEpochMilli());
-            Bson filter = Filters.all("users", users);
-
-            // Update: push username into readBy for the matched message
-            Bson update = Updates.set("messages.$[msg].content", message.content);
-            Bson update2 = Updates.set("messages.$[msg].edited", true);
-
-            // Array filter: find the correct message by timestamp
-            List<Bson> arrayFilters = Arrays.asList(
-                    Filters.and(eq("msg.timestamp", message.getTimestampInstant().toEpochMilli()),
-                            eq("msg.sender", message.sender))
-            );
-
-            UpdateOptions options = new UpdateOptions().arrayFilters(arrayFilters);
-
-            UpdateResult result = collection.updateOne(filter, update, options);
-            if (result.getModifiedCount() == 0) {
-                return new DBResult<>(false, "No document was updated. Check filters.");
-            }
-            // Redundant if it is already true, but it will simply return nothing
-            UpdateResult result2 = collection.updateOne(filter, update2, options);
-
-            return new DBResult<>(true, "successfully edited message");
-        } catch (Exception e) {
-            return new DBResult<>(false,e);
-        }
-    }
-
-    public DBResult<String> deleteMessage(ArrayList<String> users, ChatMessage message) {
-        try{
-            MongoCollection<Document> collection = Collection("conversations");
-
-            System.out.println(message.getTimestampInstant().toEpochMilli());
-            Bson filter = Filters.all("users", users);
-
-            Bson update = Updates.set("messages.$[msg].isDeleted", true);
-            // Pull message with given timestamp from messages array
-            List<Bson> arrayFilters = Arrays.asList(
-                    Filters.and(eq("msg.timestamp", message.getTimestampInstant().toEpochMilli()),
-                            eq("msg.sender", message.sender))
-            );
-
-            UpdateOptions options = new UpdateOptions().arrayFilters(arrayFilters);
-            UpdateResult result = collection.updateOne(filter, update, options);
-
-            if (result.getModifiedCount() == 0) {
-                return new DBResult<>(false, "No message was deleted. Check filters.");
-            }
-            return new DBResult<>(true, "successfully deleted message");
-        } catch (Exception e) {
-            return new DBResult<>(false,e);
-        }
-    }
-
-    public DBResult<String> createConversation(String conversationName,ArrayList<String> users)
-    {
-        try {
-            if (db == null) {
-                connect();
-            }
-
-            if(conversationExists(users)){
-                return new DBResult<>(false,"conversation already exists");
-            }
-            // Creating the document
-            // to be inserted
-
-            for(String user: users){
-                if(!userExists(user).isSuccess()){
-                    return new DBResult<>(false,"User(s) does not exist");
-                }
-            }
-
-            MongoCollection<Document> collection = Collection("conversations");
-            Document document = new Document("name",conversationName)
-                    .append("users", users)
-                    .append("messages", new ArrayList<>());
-
-
-            collection.insertOne(document);
-
-            System.out.println(
-                    "Conversation created successfully");
-            return new DBResult<>(true, "successfully created conversation");
-        }
-        catch (Exception e) {
-            return new DBResult<>(false,e);
-        }
-
-    }
-
-    public boolean conversationExists(ArrayList<String> users){
-        try{
-            if (db == null) {
-                connect();
-            }
-            MongoCollection<Document> collection = Collection("conversations");
-            Document user = collection.find(eq("users", users)).first();
-            return user != null;
-        }
-        catch (Exception ignored) {
-
+            users.insertOne(new Document("user", username).append("password", passwordHash));
+        } catch (MongoWriteException e) {
+            if (e.getError().getCategory() == ErrorCategory.DUPLICATE_KEY) return false;
+            throw e;
         }
         return true;
     }
 
-    public DBResult<String> addUserToConversation(ArrayList<String> users, String username) {
-        try{
-            if (db == null) {
-                connect();
-            }
-            MongoCollection<Document> collection = Collection("conversations");
-            ArrayList<String> newGroup = (ArrayList<String>)users.clone();
-            newGroup.add(username);
-            if(conversationExists(newGroup)){
-                return new DBResult<>(false,"conversation already exists");
-            }
-            collection.updateOne(eq("users", users), Updates.addToSet("users", username));
-            return new DBResult<>(true, "successfully added user");
-        }catch (Exception e) {
-            return new DBResult<>(false,e);
-        }
+    @Override
+    public void updatePasswordHash(String username, String passwordHash) {
+        users.updateOne(eq("user", username), Updates.set("password", passwordHash));
     }
 
-    public DBResult<String> removeUserFromConversation(ArrayList<String> users, String username) {
-        try{
-            if (db == null) {
-                connect();
-            }
-            MongoCollection<Document> collection = Collection("conversations");
-            ArrayList<String> newGroup = (ArrayList<String>)users.clone();
-            newGroup.remove(username);
-            if(conversationExists(newGroup)){
-                System.out.println("conversation already exists");
-                return new DBResult<>(false, "conversation already exists");
-            }
-            collection.updateOne(eq("users", users), Updates.pull("users", username));
-            return new DBResult<>(true, "successfully removed user");
-        }catch (Exception e) {
-            return new DBResult<>(false,e);
+    @Override
+    public List<Conversation> getConversations(String username) {
+        List<Conversation> result = new ArrayList<>();
+        for (Document document : conversations.find(eq("users", username))) {
+            result.add(toConversation(document));
         }
+        return result;
     }
 
-    public DBResult<String> newUser(String username, String password) {
-        try{
-            MongoCollection<Document> collection = Collection("users");
-
-            if(!userExists(username).isSuccess()){
-                Document newUser = new Document("user", username).append("password", password);
-                collection.insertOne(newUser);
-                return new DBResult<>(true, "successfully created user");
-            }
-            else{
-                return new DBResult<>(false, "user already exists");
-            }
-        }
-        catch (Exception e) {
-            return new DBResult<>(false,e);
-        }
+    @Override
+    public Conversation getConversation(String conversationId) {
+        if (!ObjectId.isValid(conversationId)) return null;
+        Document document = conversations.find(byId(conversationId)).first();
+        return document == null ? null : toConversation(document);
     }
 
-    public DBResult<String> userExists(String username) {
-        MongoCollection<Document> collection = Collection("users");
-
-        Document user = collection.find(eq("user", username)).first();
-        if(user !=null){
-            return new DBResult<String>(true, "user does not exist yet");
-        }
-        else{
-            return new DBResult<String>(false, "user already exists");
-        }
+    @Override
+    public boolean conversationExists(Collection<String> members) {
+        Set<String> distinct = new HashSet<>(members);
+        Bson filter = Filters.and(Filters.all("users", distinct), Filters.size("users", distinct.size()));
+        return conversations.find(filter).first() != null;
     }
 
-    public void displayCollections()
-    {
-
-        try {
-            System.out.println(
-                    "Displaying the list"
-                            + " of all collections");
-
-            MongoCollection<Document> collection
-                    = db.getCollection(
-                    "users");
-
-            for (String allColl : db
-                    .listCollectionNames()) {
-                System.out.println(allColl);
-            }
-        }
-        catch (Exception e) {
-            System.out.println(
-                    "Collections display failed");
-            System.out.println(e);
-        }
+    @Override
+    public Conversation createConversation(String name, List<String> members) {
+        Document document = new Document("name", name == null ? "" : name)
+                .append("users", new ArrayList<>(members))
+                .append("messages", new ArrayList<>());
+        conversations.insertOne(document);
+        return toConversation(document);
     }
 
-    public void shutDown(){
+    @Override
+    public void addMessage(String conversationId, ChatMessage message) {
+        Document document = new Document("content", message.content)
+                .append("sender", message.sender)
+                .append("timestamp", message.timestamp)
+                .append("readBy", new ArrayList<>(message.readBy))
+                .append("edited", message.edited)
+                .append("isDeleted", message.isDeleted);
+        conversations.updateOne(byId(conversationId), Updates.push("messages", document));
+    }
+
+    @Override
+    public boolean editMessage(String conversationId, ChatMessage message, String newContent) {
+        Bson update = Updates.combine(
+                Updates.set("messages.$[msg].content", newContent),
+                Updates.set("messages.$[msg].edited", true));
+        return updateMessage(conversationId, message, update);
+    }
+
+    @Override
+    public boolean deleteMessage(String conversationId, ChatMessage message) {
+        return updateMessage(conversationId, message, Updates.set("messages.$[msg].isDeleted", true));
+    }
+
+    @Override
+    public void markRead(String conversationId, String username) {
+        UpdateOptions options = new UpdateOptions().arrayFilters(List.of(Filters.ne("msg.sender", username)));
+        conversations.updateOne(byId(conversationId), Updates.addToSet("messages.$[msg].readBy", username), options);
+    }
+
+    @Override
+    public void addMember(String conversationId, String username) {
+        conversations.updateOne(byId(conversationId), Updates.addToSet("users", username));
+    }
+
+    @Override
+    public void removeMember(String conversationId, String username) {
+        conversations.updateOne(byId(conversationId), Updates.pull("users", username));
+        conversations.deleteOne(Filters.and(byId(conversationId), Filters.size("users", 0)));
+    }
+
+    @Override
+    public void close() {
         mongoClient.close();
+    }
+
+    // Applies an update to the message matching the sender and timestamp
+    private boolean updateMessage(String conversationId, ChatMessage message, Bson update) {
+        if (!ObjectId.isValid(conversationId)) return false;
+        Bson messageMatch = Filters.and(eq("timestamp", message.timestamp), eq("sender", message.sender));
+        Bson filter = Filters.and(byId(conversationId), Filters.elemMatch("messages", messageMatch));
+        UpdateOptions options = new UpdateOptions().arrayFilters(List.of(
+                Filters.and(eq("msg.timestamp", message.timestamp), eq("msg.sender", message.sender))));
+        UpdateResult result = conversations.updateOne(filter, update, options);
+        return result.getMatchedCount() > 0;
+    }
+
+    private static Bson byId(String conversationId) {
+        return eq("_id", new ObjectId(conversationId));
+    }
+
+    private static Conversation toConversation(Document document) {
+        Conversation conversation = new Conversation();
+        conversation.id = document.getObjectId("_id").toHexString();
+        conversation.name = Objects.requireNonNullElse(document.getString("name"), "");
+        conversation.users = new ArrayList<>(document.getList("users", String.class, List.of()));
+        for (Document messageDocument : document.getList("messages", Document.class, List.of())) {
+            conversation.messages.add(toChatMessage(messageDocument));
+        }
+        return conversation;
+    }
+
+    private static ChatMessage toChatMessage(Document document) {
+        ChatMessage message = new ChatMessage();
+        message.content = Objects.requireNonNullElse(document.getString("content"), "");
+        message.sender = document.getString("sender");
+        Object timestamp = document.get("timestamp");
+        message.timestamp = timestamp instanceof Number number ? number.longValue()
+                : timestamp instanceof Date date ? date.getTime() : 0L;
+        message.readBy = new ArrayList<>(document.getList("readBy", String.class, List.of()));
+        message.edited = document.getBoolean("edited", false);
+        message.isDeleted = document.getBoolean("isDeleted", false);
+        return message;
     }
 }
