@@ -2,6 +2,7 @@ package com.github.Iks31.messagingapp.client;
 
 
 import com.github.Iks31.messagingapp.client.scenes.StartMenu;
+import com.github.Iks31.messagingapp.common.Config;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -9,21 +10,20 @@ import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 
 import java.util.List;
-import java.util.Objects;
 
 
 /**
  * JavaFX App
  * Usage: ClientApp [--host HOST] [--port PORT]
- * Environment variables JESMS_HOST and JESMS_PORT are used as defaults.
+ * JESMS_HOST and JESMS_PORT from the environment or a .env file are used as defaults.
  */
 public class ClientApp extends Application {
     private static final ClientNetworking clientNetworking = new ClientNetworking();
 
     @Override
     public void start(Stage stage) {
-        String host = Objects.requireNonNullElse(System.getenv("JESMS_HOST"), "localhost");
-        int port = Integer.parseInt(Objects.requireNonNullElse(System.getenv("JESMS_PORT"), "9999"));
+        String host = Config.get("JESMS_HOST", "localhost");
+        int port = Config.getInt("JESMS_PORT", 9999);
         List<String> args = getParameters().getRaw();
         for (int i = 0; i + 1 < args.size(); i++) {
             switch (args.get(i)) {

@@ -19,38 +19,54 @@ A real-time messaging application with a JavaFX desktop client and a socket serv
 
 ## Requirements
 - **Java 21+**
-- **Maven 3.9+**
-- **MongoDB** (local or Atlas) – optional if you run the server with `--in-memory`
+- **Maven 3.9+** (bundled with IntelliJ IDEA, so only needed separately for the command line)
+- **MongoDB** (local or Atlas) – optional if you run the server in in-memory mode
 
-## Running
+## Configuration (.env)
+Settings, including the database password, live in a `.env` file in the project root. It is git-ignored so secrets never get committed.
 
-### 1. Start the server
+1. Copy the template: `cp .env.example .env` (or copy and rename it in IntelliJ).
+2. Set `JESMS_MONGO_URI` to your connection string, including the password. For Atlas, copy it from *Connect > Drivers*.
+   If the password contains `@ : / ? # %`, URL-encode those characters.
+
+| Setting | Used by | Default | Command-line override |
+|---|---|---|---|
+| `JESMS_MONGO_URI` | server | `mongodb://localhost:27017` | `--mongo-uri URI` |
+| `JESMS_DB_NAME` | server | `JeSMS` | `--db NAME` |
+| `JESMS_PORT` | server and client | `9999` | `--port N` |
+| `JESMS_HOST` | client | `localhost` | `--host HOST` |
+
+Precedence: command-line argument, then environment variable, then `.env`, then the default.
+The `.env` file is read from the working directory, which is the project root in both IntelliJ and Maven.
+The server also accepts `--in-memory` to run without MongoDB (data is lost when it stops).
+
+Never put the password in source code, `.env.example`, IntelliJ run configurations or commit messages.
+
+## Running in IntelliJ IDEA
+1. **Open the project:** *File > Open*, select the project folder (the one containing `pom.xml`) and trust the project. IntelliJ imports it as a Maven project; if prompted, click *Load Maven Project*.
+2. **Set the JDK:** *File > Project Structure > Project*, set *SDK* to Java 21 or newer (use *Add SDK > Download JDK* if you don't have one) and *Language level* to 21.
+3. **Create your `.env`** as described above.
+4. **Run the server:** choose **Server** in the run configuration dropdown (top right) and click Run. Use **Server (in-memory)** to try the app without MongoDB.
+   The console should show `[START] Server started on port 9999...`.
+5. **Run a client:** choose **Client** and click Run. To open several clients (to chat between accounts), go to
+   *Run > Edit Configurations > Client > Modify options* and tick *Allow multiple instances*, then run it again.
+6. **Run the tests:** right-click `src/test/java` and choose *Run 'All Tests'*.
+
+The run configurations are shared in `.idea/runConfigurations`. The client is launched through `ClientLauncher` because running
+`ClientApp` directly from an IDE fails with *"JavaFX runtime components are missing"*.
+If the configurations don't appear, open the Maven tool window (right edge), click *Reload All Maven Projects*, and restart IntelliJ.
+
+## Running from the command line
 ```bash
-# Using a local MongoDB on mongodb://localhost:27017
+# Server (reads .env)
 mvn compile exec:java
-
-# Using MongoDB Atlas or another instance
-JESMS_MONGO_URI="mongodb+srv://<user>:<password>@<cluster>/" mvn compile exec:java
-
-# Without MongoDB (data is lost when the server stops)
+# Server without MongoDB
 mvn compile exec:java -Dexec.args="--in-memory"
-```
 
-| Option | Environment variable | Default |
-|---|---|---|
-| `--port N` | `JESMS_PORT` | `9999` |
-| `--mongo-uri URI` | `JESMS_MONGO_URI` | `mongodb://localhost:27017` |
-| `--db NAME` | `JESMS_DB_NAME` | `JeSMS` |
-| `--in-memory` | – | off |
-
-Never commit database passwords; pass them through `JESMS_MONGO_URI` (e.g. from a local `.env` file, which is git-ignored).
-
-### 2. Start one or more clients
-```bash
-mvn javafx:run                                            # connects to localhost:9999
+# Client (run once per window you want)
+mvn javafx:run
 mvn javafx:run -Djavafx.args="--host 192.168.1.20 --port 9999"
 ```
-`JESMS_HOST` and `JESMS_PORT` can be used instead of the arguments.
 
 ## Using the app
 - **Register** an account (usernames: 5–15 letters, numbers or `_`; passwords: 5–64 characters), then **Login**.
@@ -68,13 +84,14 @@ The integration tests start a real server with in-memory storage and exercise th
 
 ## Project structure
 ```
-common/   Shared model (ChatMessage, Conversation, NetworkMessage) and Protocol (flags, payloads, validation)
+common/   Shared model (ChatMessage, Conversation, NetworkMessage), Protocol (flags, payloads, validation) and Config (.env loading)
 server/   Server (connection handling and request logic)
 server/db Database interface, MongoDatabase, InMemoryDatabase, PasswordHasher
-client/   ClientApp, ClientNetworking, JeSMSController, dialogs, scenes/ and ui_components/
+client/   ClientApp (+ ClientLauncher for IDEs), ClientNetworking, JeSMSController, dialogs, scenes/ and ui_components/
 ```
 
 ### Notes
+- The server prints `[CONFIG] Loaded settings from .../.env` when it finds your `.env`; it never prints its values.
 - Accounts created before password hashing was added (plain-text passwords) still log in and are upgraded to a hash automatically on their next login.
 - Only the shared model classes can be deserialized by the server; anything else closes the connection.
 
